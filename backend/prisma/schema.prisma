@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  GUEST
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum SessionStatus {
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum MasteryLevel {
+  BEGINNER
+  UNDERSTANDING
+  PROFICIENT
+  MASTERY
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  passwordHash    String?
+  name            String
+  role            Role             @default(STUDENT)
+  preferences     Json             @default("{}")
+  sessions        Session[]
+  learningRecords LearningRecord[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Session {
+  id        String        @id @default(uuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  subject   String
+  topic     String?
+  title     String
+  status    SessionStatus @default(ACTIVE)
+  messages  Message[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model Message {
+  id        String      @id @default(uuid())
+  sessionId String
+  session   Session     @relation(fields: [sessionId], references: [id])
+  role      MessageRole
+  content   String      @db.Text
+  metadata  Json?
+  createdAt DateTime    @default(now())
+}
+
+model LearningRecord {
+  id            String       @id @default(uuid())
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+  concept       String
+  masteryLevel  MasteryLevel @default(BEGINNER)
+  lastPracticed DateTime     @default(now())
+
+  @@unique([userId, concept])
+}
+
+model Subject {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  description    String
+  knowledgePoints KnowledgePoint[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model KnowledgePoint {
+  id        String   @id @default(uuid())
+  subjectId String
+  subject   Subject  @relation(fields: [subjectId], references: [id])
+  name      String
+  createdAt DateTime @default(now())
+
+  @@unique([subjectId, name])
+}

@@ -1,0 +1,41 @@
+version: '3.9'
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: socratic-backend
+    ports:
+      - '4000:4000'
+    env_file:
+      - ./backend/.env.example
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/socratic
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      - postgres
+      - redis
+    command: sh -c "npx prisma migrate deploy && node dist/index.js"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: socratic-postgres
+    environment:
+      POSTGRES_DB: socratic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: socratic-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
