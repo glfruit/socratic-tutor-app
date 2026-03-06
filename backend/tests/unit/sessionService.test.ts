@@ -23,12 +23,16 @@ describe('SessionService', () => {
 
   it('updates session after ownership check', async () => {
     const prisma = createPrismaMock();
-    prisma.session.findFirst.mockResolvedValue({ id: 's1' });
-    prisma.session.update.mockResolvedValue({ id: 's1', status: SessionStatus.PAUSED });
+    prisma.session.updateMany.mockResolvedValue({ count: 1 });
+    prisma.session.findFirst.mockResolvedValue({ id: 's1', status: SessionStatus.PAUSED });
     const service = new SessionService(prisma as any);
 
     const session = await service.updateSession('u1', 's1', { status: SessionStatus.PAUSED });
     expect(session.status).toBe(SessionStatus.PAUSED);
+    expect(prisma.session.updateMany).toHaveBeenCalledWith({
+      where: { id: 's1', userId: 'u1' },
+      data: { status: SessionStatus.PAUSED }
+    });
   });
 
   it('deletes session and messages in transaction', async () => {

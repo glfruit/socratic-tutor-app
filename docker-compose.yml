@@ -1,5 +1,19 @@
 version: '3.9'
 services:
+  frontend:
+    image: node:20-alpine
+    container_name: socratic-frontend
+    working_dir: /app
+    ports:
+      - '5173:5173'
+    environment:
+      VITE_API_URL: http://localhost:4000/api/v1
+    volumes:
+      - ./:/app
+    depends_on:
+      - backend
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port 5173"
+
   backend:
     build:
       context: ./backend

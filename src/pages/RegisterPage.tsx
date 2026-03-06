@@ -37,8 +37,8 @@ export function RegisterPage() {
       setError("请输入有效邮箱");
       return;
     }
-    if (form.password.length < 6) {
-      setError("密码至少6位");
+    if (form.password.length < 8) {
+      setError("密码至少8位");
       return;
     }
 

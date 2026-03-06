@@ -25,8 +25,8 @@ export function LoginPage() {
     if (!form.email.includes("@")) {
       return "请输入有效邮箱";
     }
-    if (form.password.length < 6) {
-      return "密码至少6位";
+    if (form.password.length < 8) {
+      return "密码至少8位";
     }
     return "";
   };
@@ -70,7 +70,7 @@ export function LoginPage() {
             type="password"
             value={form.password}
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
-            helperText="不少于6位"
+            helperText="不少于8位"
           />
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
           <Button className="w-full" type="submit" isLoading={loading}>

@@ -33,11 +33,14 @@ export class SessionService {
     sessionId: string,
     input: { subject?: string; topic?: string; title?: string; status?: SessionStatus }
   ) {
-    await this.getSession(userId, sessionId);
-    return this.prisma.session.update({
-      where: { id: sessionId },
+    const result = await this.prisma.session.updateMany({
+      where: { id: sessionId, userId },
       data: input
     });
+    if (result.count === 0) {
+      throw new AppError('Session not found', 404);
+    }
+    return this.getSession(userId, sessionId);
   }
 
   async deleteSession(userId: string, sessionId: string) {

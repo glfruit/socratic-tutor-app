@@ -16,35 +16,14 @@ interface AuthResult {
   token: string;
 }
 
-const buildMockUser = (email: string, role: UserRole, name = "学习者"): User => ({
-  id: crypto.randomUUID(),
-  email,
-  name,
-  role
-});
-
 export const authService = {
   async login(input: LoginInput): Promise<AuthResult> {
-    try {
-      const response = await api.post<AuthResult>("/auth/login", input);
-      return response.data;
-    } catch {
-      return {
-        user: buildMockUser(input.email, "STUDENT"),
-        token: "mock-token"
-      };
-    }
+    const response = await api.post<AuthResult>("/auth/login", input);
+    return response.data;
   },
 
   async register(input: RegisterInput): Promise<AuthResult> {
-    try {
-      const response = await api.post<AuthResult>("/auth/register", input);
-      return response.data;
-    } catch {
-      return {
-        user: buildMockUser(input.email, input.role, input.name),
-        token: "mock-token"
-      };
-    }
+    const response = await api.post<AuthResult>("/auth/register", input);
+    return response.data;
   }
 };

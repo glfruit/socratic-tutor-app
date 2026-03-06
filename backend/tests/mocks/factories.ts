@@ -9,6 +9,7 @@ export const createPrismaMock = () => ({
     create: vi.fn(),
     findMany: vi.fn(),
     findFirst: vi.fn(),
+    updateMany: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
     count: vi.fn()
