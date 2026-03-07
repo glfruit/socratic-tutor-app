@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { sessionService } from "@/services/sessionService";
 import type { ChatMessage } from "@/types";
 
+let latestLoadRequestId = 0;
+
 interface SendMessageOptions {
   subject?: string;
   level?: string | null;
@@ -56,16 +58,31 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   activeContext: null,
 
   async loadSession(sessionId) {
+    const requestId = ++latestLoadRequestId;
+    console.info("[sessionStore] Loading session", { sessionId, requestId });
     set({ isLoadingSession: true, error: null });
     try {
       const messages = await sessionService.getSessionMessages(sessionId);
+      if (requestId !== latestLoadRequestId) {
+        console.info("[sessionStore] Ignoring stale session load", { sessionId, requestId, latestLoadRequestId });
+        return;
+      }
+
+      console.info("[sessionStore] Session loaded", { sessionId, requestId, messageCount: messages.length });
       set({ currentSessionId: sessionId, messages, isLoadingSession: false, activeContext: null });
     } catch {
+      if (requestId !== latestLoadRequestId) {
+        console.info("[sessionStore] Ignoring stale session load failure", { sessionId, requestId, latestLoadRequestId });
+        return;
+      }
+
       set({ error: "会话加载失败，请稍后重试。", isLoadingSession: false });
     }
   },
 
   resetSession() {
+    latestLoadRequestId += 1;
+    console.info("[sessionStore] Resetting session", { loadRequestId: latestLoadRequestId });
     set({ currentSessionId: null, messages: [], isStreaming: false, isLoadingSession: false, error: null, activeContext: null });
   },
 

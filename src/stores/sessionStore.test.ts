@@ -52,6 +52,38 @@ describe("sessionStore", () => {
     expect(useSessionStore.getState().messages).toHaveLength(2);
   });
 
+  it("resetSession clears all session state", () => {
+    useSessionStore.setState({
+      currentSessionId: "session-123",
+      messages: [
+        {
+          id: "message-1",
+          role: "user",
+          content: "旧消息",
+          createdAt: "2026-03-07T08:00:00Z"
+        }
+      ],
+      isStreaming: true,
+      isLoadingSession: true,
+      error: "错误",
+      activeContext: {
+        subject: "物理",
+        level: "HIGH_SCHOOL"
+      }
+    });
+
+    useSessionStore.getState().resetSession();
+
+    expect(useSessionStore.getState()).toMatchObject({
+      currentSessionId: null,
+      messages: [],
+      isStreaming: false,
+      isLoadingSession: false,
+      error: null,
+      activeContext: null
+    });
+  });
+
   it("surfaces an error when creating a session fails", async () => {
     vi.mocked(sessionService.createSession).mockRejectedValue(new Error("network"));
 
@@ -132,5 +164,40 @@ describe("sessionStore", () => {
     expect(useSessionStore.getState().currentSessionId).toBe("session-math");
     expect(useSessionStore.getState().messages).toHaveLength(2);
     expect(useSessionStore.getState().messages[0]?.content).toBe("新问题");
+  });
+
+  it("ignores stale session loads after a reset", async () => {
+    let resolveMessages: ((value: Array<{
+      id: string;
+      role: "user";
+      content: string;
+      createdAt: string;
+    }>) => void) | undefined;
+
+    vi.mocked(sessionService.getSessionMessages).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveMessages = resolve;
+        })
+    );
+
+    const loadPromise = useSessionStore.getState().loadSession("session-physics");
+    useSessionStore.getState().resetSession();
+    resolveMessages?.([
+      {
+        id: "message-1",
+        role: "user",
+        content: "不应显示",
+        createdAt: "2026-03-07T08:00:00Z"
+      }
+    ]);
+
+    await loadPromise;
+
+    expect(useSessionStore.getState()).toMatchObject({
+      currentSessionId: null,
+      messages: [],
+      isLoadingSession: false
+    });
   });
 });

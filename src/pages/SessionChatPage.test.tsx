@@ -31,7 +31,19 @@ function SessionRouteHarness() {
 }
 
 describe("SessionChatPage", () => {
+  const resetSessionMock = vi.fn(() => {
+    useSessionStore.setState({
+      currentSessionId: null,
+      messages: [],
+      isStreaming: false,
+      isLoadingSession: false,
+      error: null,
+      activeContext: null
+    });
+  });
+
   beforeEach(() => {
+    vi.clearAllMocks();
     usePreferencesStore.setState({
       defaultLevel: "HIGH_SCHOOL",
       theme: "system",
@@ -56,16 +68,7 @@ describe("SessionChatPage", () => {
       error: null,
       activeContext: null,
       loadSession: vi.fn(),
-      resetSession: vi.fn(() => {
-        useSessionStore.setState({
-          currentSessionId: null,
-          messages: [],
-          isStreaming: false,
-          isLoadingSession: false,
-          error: null,
-          activeContext: null
-        });
-      }),
+      resetSession: resetSessionMock,
       clearError: vi.fn(),
       sendMessage: vi.fn(),
       stopStreaming: vi.fn()
@@ -83,6 +86,19 @@ describe("SessionChatPage", () => {
 
     expect(screen.getByText("高中")).toBeInTheDocument();
     expect(screen.queryByText("HIGH_SCHOOL")).not.toBeInTheDocument();
+  });
+
+  it("does not render stale messages when entering a fresh subject route", () => {
+    render(
+      <MemoryRouter initialEntries={["/sessions/new?subject=数学&level=HIGH_SCHOOL"]}>
+        <Routes>
+          <Route path="/sessions/:id" element={<SessionChatPage />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId("message-list")).toHaveTextContent("");
+    expect(resetSessionMock).toHaveBeenCalled();
   });
 
   it("resets the current session and routes to a fresh session when the subject changes", async () => {
@@ -103,5 +119,6 @@ describe("SessionChatPage", () => {
     });
 
     expect(useSessionStore.getState().messages).toEqual([]);
+    expect(resetSessionMock).toHaveBeenCalled();
   });
 });
