@@ -7,11 +7,11 @@ interface LevelSelectorProps {
 }
 
 export const levelOptions: Array<{ level: LearningLevel; label: string; description: string }> = [
-  { level: "FOUNDATION", label: "启蒙", description: "用更具体的问题帮助建立概念和例子。" },
-  { level: "MIDDLE_SCHOOL", label: "初阶", description: "强调现象解释与关键术语辨析。" },
-  { level: "HIGH_SCHOOL", label: "标准", description: "平衡抽象推理、结构分析和迁移。" },
-  { level: "UNIVERSITY", label: "进阶", description: "追问论证强度、假设边界与方法论。" },
-  { level: "ADVANCED", label: "研究", description: "鼓励批判立场、反例构造和跨文本比较。" }
+  { level: "ELEMENTARY", label: "小学", description: "用更具体的问题帮助建立概念和例子。" },
+  { level: "MIDDLE_SCHOOL", label: "初中", description: "强调现象解释与关键术语辨析。" },
+  { level: "HIGH_SCHOOL", label: "高中", description: "平衡抽象推理、结构分析和迁移。" },
+  { level: "UNIVERSITY", label: "大学", description: "追问论证强度、假设边界与方法论。" },
+  { level: "GRADUATE", label: "研究生", description: "鼓励批判立场、反例构造和跨文本比较。" }
 ];
 
 export function LevelSelector({ value, onChange }: LevelSelectorProps) {

@@ -8,8 +8,8 @@ describe("LevelSelector", () => {
     render(<LevelSelector value="HIGH_SCHOOL" onChange={onChange} />);
 
     expect(screen.getAllByRole("button")).toHaveLength(5);
-    await userEvent.click(screen.getByRole("button", { name: /研究/i }));
+    await userEvent.click(screen.getByRole("button", { name: /研究生/i }));
 
-    expect(onChange).toHaveBeenCalledWith("ADVANCED");
+    expect(onChange).toHaveBeenCalledWith("GRADUATE");
   });
 });

@@ -1,5 +1,5 @@
 export type UserRole = "GUEST" | "STUDENT" | "TEACHER" | "ADMIN";
-export type LearningLevel = "FOUNDATION" | "MIDDLE_SCHOOL" | "HIGH_SCHOOL" | "UNIVERSITY" | "ADVANCED";
+export type LearningLevel = "ELEMENTARY" | "MIDDLE_SCHOOL" | "HIGH_SCHOOL" | "UNIVERSITY" | "GRADUATE";
 export type DocumentType = "BOOK" | "MATERIAL";
 export type DocumentStatus = "PROCESSING" | "READY" | "ERROR";
 export type ThemePreference = "system" | "light" | "dark";
