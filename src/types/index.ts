@@ -34,10 +34,20 @@ export interface ChatMessage {
   };
 }
 
+export interface KnowledgePoint {
+  id: string;
+  subjectId: string;
+  name: string;
+  createdAt: string;
+}
+
 export interface Subject {
   id: string;
   name: string;
-  domains: string[];
+  description: string;
+  knowledgePoints: KnowledgePoint[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ProgressStat {

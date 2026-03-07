@@ -30,7 +30,7 @@ export function SubjectsPage() {
         {subjects.map((subject) => (
           <article key={subject.id} className="rounded-xl bg-white p-4 shadow-card dark:bg-slate-900">
             <h2 className="text-lg font-medium text-slate-800 dark:text-white">{subject.name}</h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{subject.domains.join(" · ")}</p>
+            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">{subject.knowledgePoints.map(kp => kp.name).join(" · ")}</p>
             <Button
               className="mt-4"
               onClick={() => navigate(`/sessions/new?subject=${subject.name}&level=${defaultLevel}`)}

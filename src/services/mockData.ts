@@ -34,9 +34,42 @@ export const mockSessions: SessionSummary[] = [
 ];
 
 export const mockSubjects: Subject[] = [
-  { id: "math", name: "数学", domains: ["代数", "几何", "微积分"] },
-  { id: "science", name: "科学", domains: ["物理", "化学", "生物"] },
-  { id: "humanity", name: "人文", domains: ["哲学", "文学", "历史"] }
+  {
+    id: "math",
+    name: "数学",
+    description: "数学思维与问题解决",
+    knowledgePoints: [
+      { id: "kp-1", subjectId: "math", name: "代数", createdAt: "2024-01-01" },
+      { id: "kp-2", subjectId: "math", name: "几何", createdAt: "2024-01-01" },
+      { id: "kp-3", subjectId: "math", name: "微积分", createdAt: "2024-01-01" }
+    ],
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01"
+  },
+  {
+    id: "science",
+    name: "科学",
+    description: "自然科学探索",
+    knowledgePoints: [
+      { id: "kp-4", subjectId: "science", name: "物理", createdAt: "2024-01-01" },
+      { id: "kp-5", subjectId: "science", name: "化学", createdAt: "2024-01-01" },
+      { id: "kp-6", subjectId: "science", name: "生物", createdAt: "2024-01-01" }
+    ],
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01"
+  },
+  {
+    id: "humanity",
+    name: "人文",
+    description: "人文社科素养",
+    knowledgePoints: [
+      { id: "kp-7", subjectId: "humanity", name: "哲学", createdAt: "2024-01-01" },
+      { id: "kp-8", subjectId: "humanity", name: "文学", createdAt: "2024-01-01" },
+      { id: "kp-9", subjectId: "humanity", name: "历史", createdAt: "2024-01-01" }
+    ],
+    createdAt: "2024-01-01",
+    updatedAt: "2024-01-01"
+  }
 ];
 
 export const mockMessages: Record<string, ChatMessage[]> = {
