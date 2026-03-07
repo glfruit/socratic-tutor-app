@@ -11,7 +11,14 @@ interface AuthState {
   logout: () => void;
 }
 
-const initialToken = localStorage.getItem(TOKEN_KEY);
+const getInitialToken = () => {
+  if (typeof window !== "undefined") {
+    return localStorage.getItem(TOKEN_KEY);
+  }
+  return null;
+};
+
+const initialToken = getInitialToken();
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
