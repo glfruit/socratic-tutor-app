@@ -1,3 +1,5 @@
+import { MarkdownMessage } from "@/components/dialogue/MarkdownMessage";
+
 interface MessageBubbleProps {
   role: "user" | "assistant";
   content: string;
@@ -21,7 +23,7 @@ export function MessageBubble({ role, content, hints = [], createdAt }: MessageB
           <span>{isUser ? "你" : "导师"}</span>
           {createdAt ? <span>{new Date(createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</span> : null}
         </div>
-        <p className="whitespace-pre-wrap leading-6">{content}</p>
+        <MarkdownMessage content={content} variant={isUser ? "user" : "assistant"} />
         {!isUser && hints.length ? (
           <div className="mt-2 flex flex-wrap gap-2">
             {hints.map((hint) => (

@@ -1,6 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { MessageBubble } from "./MessageBubble";
 
+vi.mock("./MarkdownMessage", () => ({
+  MarkdownMessage: ({ content }: { content: string }) => <div>{content}</div>
+}));
+
 describe("MessageBubble", () => {
   it("renders user message", () => {
     render(<MessageBubble role="user" content="hello" />);

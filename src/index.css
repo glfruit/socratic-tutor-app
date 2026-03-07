@@ -27,6 +27,35 @@ body {
   background: inherit;
 }
 
+.tiptap-editor p.is-editor-empty:first-child::before {
+  color: rgb(148 163 184);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap-editor .Tiptap-mathematics-render {
+  overflow-x: auto;
+}
+
+.tiptap-editor .Tiptap-mathematics-editor {
+  border-radius: 0.75rem;
+  background: rgb(241 245 249);
+  padding: 0.125rem 0.375rem;
+}
+
+.katex-inline {
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  vertical-align: middle;
+}
+
+.katex-block {
+  white-space: pre-wrap;
+}
+
 #root {
   min-height: 100vh;
 }

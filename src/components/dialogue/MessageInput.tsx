@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/common/Button";
+import { RichTextEditor } from "@/components/dialogue/RichTextEditor";
 
 interface MessageInputProps {
   onSend: (content: string) => Promise<{ ok: boolean }>;
@@ -11,6 +12,7 @@ interface MessageInputProps {
 
 export function MessageInput({ onSend, isStreaming, isDisabled = false, error = null, onStop }: MessageInputProps) {
   const [value, setValue] = useState("");
+  const [valueHtml, setValueHtml] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {
@@ -19,15 +21,20 @@ export function MessageInput({ onSend, isStreaming, isDisabled = false, error = 
       return;
     }
 
+    const previousValue = value;
+    const previousValueHtml = valueHtml;
     setIsSubmitting(true);
     setValue("");
+    setValueHtml("");
     try {
       const result = await onSend(content);
       if (!result.ok) {
-        setValue(content);
+        setValue(previousValue);
+        setValueHtml(previousValueHtml);
       }
     } catch {
-      setValue(content);
+      setValue(previousValue);
+      setValueHtml(previousValueHtml);
     } finally {
       setIsSubmitting(false);
     }
@@ -38,19 +45,14 @@ export function MessageInput({ onSend, isStreaming, isDisabled = false, error = 
       <label htmlFor="chat-input" className="sr-only">
         消息输入
       </label>
-      <textarea
-        id="chat-input"
-        value={value}
-        onChange={(event) => setValue(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            void submit();
-          }
-        }}
-        className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm text-slate-900 caret-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary"
-        placeholder="输入你的思考，按 Enter 发送..."
+      <RichTextEditor
+        valueHtml={valueHtml}
         disabled={isDisabled || isSubmitting}
+        onSubmit={() => void submit()}
+        onChange={({ markdown, html }) => {
+          setValue(markdown);
+          setValueHtml(html);
+        }}
       />
       <div className="mt-2 flex items-center justify-between">
         <span className="text-xs text-slate-500">{value.length}/5000</span>

@@ -2,6 +2,39 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageInput } from "./MessageInput";
 
+vi.mock("./RichTextEditor", () => ({
+  RichTextEditor: ({
+    valueHtml,
+    onChange,
+    onSubmit,
+    disabled
+  }: {
+    valueHtml: string;
+    onChange: (payload: { markdown: string; html: string; textLength: number }) => void;
+    onSubmit: () => void;
+    disabled?: boolean;
+  }) => (
+    <textarea
+      aria-label="消息输入"
+      value={valueHtml.replace(/^<p>|<\/p>$/g, "")}
+      disabled={disabled}
+      onChange={(event) =>
+        onChange({
+          markdown: event.target.value,
+          html: event.target.value ? `<p>${event.target.value}</p>` : "",
+          textLength: event.target.value.length
+        })
+      }
+      onKeyDown={(event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          onSubmit();
+        }
+      }}
+    />
+  )
+}));
+
 describe("MessageInput", () => {
   it("clears the input immediately after sending with the button", async () => {
     let resolveSend: ((value: { ok: boolean }) => void) | undefined;
