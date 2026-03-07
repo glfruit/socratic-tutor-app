@@ -3,6 +3,28 @@ import userEvent from "@testing-library/user-event";
 import { MessageInput } from "./MessageInput";
 
 describe("MessageInput", () => {
+  it("clears the input immediately after sending with the button", async () => {
+    let resolveSend: ((value: { ok: boolean }) => void) | undefined;
+    const onSend = vi.fn(
+      () =>
+        new Promise<{ ok: boolean }>((resolve) => {
+          resolveSend = resolve;
+        })
+    );
+
+    render(<MessageInput onSend={onSend} isStreaming={false} onStop={() => {}} />);
+
+    const textarea = screen.getByLabelText("消息输入");
+    await userEvent.type(textarea, "你好");
+    await userEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(onSend).toHaveBeenCalledWith("你好");
+    expect(textarea).toHaveValue("");
+
+    resolveSend?.({ ok: true });
+    await waitFor(() => expect(textarea).toHaveValue(""));
+  });
+
   it("clears the input after sending with the button", async () => {
     const onSend = vi.fn().mockResolvedValue({ ok: true });
     render(<MessageInput onSend={onSend} isStreaming={false} onStop={() => {}} />);
@@ -42,5 +64,16 @@ describe("MessageInput", () => {
     await userEvent.click(screen.getByRole("button", { name: "发送" }));
 
     expect(textarea).toHaveValue("失败保留");
+  });
+
+  it("restores draft when send rejects", async () => {
+    const onSend = vi.fn().mockRejectedValue(new Error("network"));
+    render(<MessageInput onSend={onSend} isStreaming={false} onStop={() => {}} />);
+
+    const textarea = screen.getByLabelText("消息输入");
+    await userEvent.type(textarea, "重试内容");
+    await userEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    await waitFor(() => expect(textarea).toHaveValue("重试内容"));
   });
 });

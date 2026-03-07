@@ -20,18 +20,21 @@ export function MessageInput({ onSend, isStreaming, isDisabled = false, error = 
     }
 
     setIsSubmitting(true);
+    setValue("");
     try {
       const result = await onSend(content);
-      if (result.ok) {
-        setValue("");
+      if (!result.ok) {
+        setValue(content);
       }
+    } catch {
+      setValue(content);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-white/95 p-4 shadow-card dark:border-slate-800 dark:bg-slate-950/95">
+    <div className="rounded-[28px] border border-slate-200 bg-white/95 p-4 shadow-card">
       <label htmlFor="chat-input" className="sr-only">
         消息输入
       </label>
@@ -45,12 +48,12 @@ export function MessageInput({ onSend, isStreaming, isDisabled = false, error = 
             void submit();
           }
         }}
-        className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
+        className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm text-slate-900 caret-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary"
         placeholder="输入你的思考，按 Enter 发送..."
         disabled={isDisabled || isSubmitting}
       />
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs text-slate-500 dark:text-slate-400">{value.length}/5000</span>
+        <span className="text-xs text-slate-500">{value.length}/5000</span>
         <div className="flex gap-2">
           {isStreaming ? (
             <Button variant="ghost" onClick={onStop}>
