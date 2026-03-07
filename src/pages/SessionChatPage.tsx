@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useSearchParams, useParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { MessageInput } from "@/components/dialogue/MessageInput";
 import { MessageList } from "@/components/dialogue/MessageList";
 import { useSessionStore } from "@/stores/sessionStore";
@@ -7,35 +7,96 @@ import { usePreferencesStore } from "@/stores/usePreferencesStore";
 
 export function SessionChatPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const subject = searchParams.get("subject") ?? "通用";
   const levelFromQuery = searchParams.get("level");
   const defaultLevel = usePreferencesStore((state) => state.defaultLevel);
 
-  const { messages, isStreaming, loadSession, sendMessage, stopStreaming } = useSessionStore((state) => ({
+  const {
+    currentSessionId,
+    messages,
+    isStreaming,
+    isLoadingSession,
+    error,
+    loadSession,
+    resetSession,
+    clearError,
+    sendMessage,
+    stopStreaming
+  } = useSessionStore((state) => ({
+    currentSessionId: state.currentSessionId,
     messages: state.messages,
     isStreaming: state.isStreaming,
+    isLoadingSession: state.isLoadingSession,
+    error: state.error,
     loadSession: state.loadSession,
+    resetSession: state.resetSession,
+    clearError: state.clearError,
     sendMessage: state.sendMessage,
     stopStreaming: state.stopStreaming
   }));
 
   useEffect(() => {
     if (id && id !== "new") {
-      loadSession(id);
+      void loadSession(id);
+      return;
     }
-  }, [id, loadSession]);
+
+    resetSession();
+  }, [id, loadSession, resetSession]);
+
+  useEffect(() => {
+    if (id === "new" && currentSessionId) {
+      navigate(`/sessions/${currentSessionId}?subject=${encodeURIComponent(subject)}&level=${encodeURIComponent(levelFromQuery ?? defaultLevel)}`, {
+        replace: true
+      });
+    }
+  }, [currentSessionId, defaultLevel, id, levelFromQuery, navigate, subject]);
+
+  useEffect(() => {
+    clearError();
+  }, [clearError, id]);
+
+  const levelLabel = levelFromQuery ?? defaultLevel;
+  const sessionStatus = isLoadingSession ? "正在载入会话" : isStreaming ? "导师正在生成回应" : "可以继续提问";
 
   return (
     <div className="space-y-4">
-      <header className="rounded-xl bg-white p-4 shadow-card">
-        <h1 className="text-xl font-semibold text-slate-900">苏格拉底对话</h1>
-        <p className="text-sm text-slate-500">学科：{subject}</p>
-        <p className="mt-1 text-sm text-slate-500">提问层级：{levelFromQuery ?? defaultLevel}</p>
+      <header className="overflow-hidden rounded-[32px] bg-gradient-to-r from-slate-900 via-slate-800 to-primary p-6 text-white shadow-card">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.28em] text-blue-100/80">Socratic Tutor</p>
+            <h1 className="mt-2 text-2xl font-semibold">苏格拉底对话</h1>
+            <p className="mt-2 max-w-2xl text-sm text-blue-50/85">
+              围绕当前问题持续追问、拆解前提与推理路径，把模糊想法整理成清晰论证。
+            </p>
+          </div>
+          <div className="grid gap-3 text-sm sm:grid-cols-3">
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.18em] text-blue-100/70">学科</p>
+              <p className="mt-1 font-medium text-white">{subject}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.18em] text-blue-100/70">层级</p>
+              <p className="mt-1 font-medium text-white">{levelLabel}</p>
+            </div>
+            <div className="rounded-2xl bg-white/10 p-3 backdrop-blur">
+              <p className="text-xs uppercase tracking-[0.18em] text-blue-100/70">状态</p>
+              <p className="mt-1 font-medium text-white">{sessionStatus}</p>
+            </div>
+          </div>
+        </div>
       </header>
-      <MessageList messages={messages} />
-      {isStreaming ? <p className="text-sm text-primary">导师正在思考...</p> : null}
-      <MessageInput onSend={sendMessage} isStreaming={isStreaming} onStop={stopStreaming} />
+      <MessageList messages={messages} isLoading={isLoadingSession} />
+
+      <MessageInput
+        onSend={(content) => sendMessage(content, { subject, level: levelLabel })}
+        isStreaming={isStreaming}
+        isDisabled={isLoadingSession}
+        error={error}
+        onStop={stopStreaming}
+      />
     </div>
   );
 }

@@ -2,25 +2,32 @@ import { useState } from "react";
 import { Button } from "@/components/common/Button";
 
 interface MessageInputProps {
-  onSend: (content: string) => void;
+  onSend: (content: string) => Promise<{ ok: boolean }>;
   isStreaming: boolean;
+  isDisabled?: boolean;
+  error?: string | null;
   onStop: () => void;
 }
 
-export function MessageInput({ onSend, isStreaming, onStop }: MessageInputProps) {
+export function MessageInput({ onSend, isStreaming, isDisabled = false, error = null, onStop }: MessageInputProps) {
   const [value, setValue] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = () => {
+  const submit = async () => {
     const content = value.trim();
-    if (!content || isStreaming) {
+    if (!content || isStreaming || isSubmitting || isDisabled) {
       return;
     }
-    onSend(content);
-    setValue("");
+    setIsSubmitting(true);
+    const result = await onSend(content);
+    if (result.ok) {
+      setValue("");
+    }
+    setIsSubmitting(false);
   };
 
   return (
-    <div className="rounded-xl bg-white p-4 shadow-card">
+    <div className="rounded-[28px] border border-slate-200 bg-white/95 p-4 shadow-card dark:border-slate-800 dark:bg-slate-950/95">
       <label htmlFor="chat-input" className="sr-only">
         消息输入
       </label>
@@ -31,25 +38,27 @@ export function MessageInput({ onSend, isStreaming, onStop }: MessageInputProps)
         onKeyDown={(event) => {
           if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
-            submit();
+            void submit();
           }
         }}
-        className="h-24 w-full resize-none rounded-lg border border-slate-300 p-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+        className="h-28 w-full resize-none rounded-2xl border border-slate-300 bg-white p-4 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500"
         placeholder="输入你的思考，按 Enter 发送..."
+        disabled={isDisabled || isSubmitting}
       />
       <div className="mt-2 flex items-center justify-between">
-        <span className="text-xs text-slate-500">{value.length}/5000</span>
+        <span className="text-xs text-slate-500 dark:text-slate-400">{value.length}/5000</span>
         <div className="flex gap-2">
           {isStreaming ? (
             <Button variant="ghost" onClick={onStop}>
               停止
             </Button>
           ) : null}
-          <Button onClick={submit} disabled={!value.trim() || isStreaming}>
+          <Button onClick={() => void submit()} disabled={!value.trim() || isStreaming || isDisabled} isLoading={isSubmitting}>
             发送
           </Button>
         </div>
       </div>
+      {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
     </div>
   );
 }
