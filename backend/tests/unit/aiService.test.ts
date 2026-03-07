@@ -20,7 +20,7 @@ describe('AIService', () => {
     vi.unmock('../../src/config/env');
   });
 
-  it('uses DeepSeek configuration and returns a fallback response when content is empty', async () => {
+  it('uses DeepSeek configuration and throws when provider returns empty content', async () => {
     const { OpenAI, create } = createOpenAIMock();
     create.mockResolvedValue({ choices: [] });
     vi.doMock('openai', () => ({ default: OpenAI }));
@@ -36,18 +36,19 @@ describe('AIService', () => {
 
     const { AIService } = await import('../../src/services/aiService');
     const service = new AIService();
-    const response = await service.generateResponse({
-      subject: 'math',
-      topic: 'algebra',
-      conversationHistory: [{ role: 'user', content: 'hello' }],
-      userInput: 'help me'
-    });
+    await expect(
+      service.generateResponse({
+        subject: 'math',
+        topic: 'algebra',
+        conversationHistory: [{ role: 'user', content: 'hello' }],
+        userInput: 'help me'
+      })
+    ).rejects.toThrow('AI 服务返回了空响应，请稍后重试。');
 
     expect(OpenAI).toHaveBeenCalledWith({
       apiKey: 'deepseek-key',
       baseURL: 'https://api.deepseek.com/v1'
     });
-    expect(response).toContain('一步步推理');
     expect(create).toHaveBeenCalledOnce();
   });
 
@@ -102,8 +103,16 @@ describe('AIService', () => {
     }));
 
     const { AIService } = await import('../../src/services/aiService');
+    const service = new AIService();
 
-    expect(() => new AIService()).toThrow('请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY');
+    await expect(
+      service.generateResponse({
+        subject: 'history',
+        topic: 'rome',
+        conversationHistory: [],
+        userInput: 'question'
+      })
+    ).rejects.toThrow('AI 服务未配置，请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY。');
     expect(AIService.prototype.buildSocraticSystemPrompt.call({}, 'history', 'rome')).toContain(
       '学科：history'
     );

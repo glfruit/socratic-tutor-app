@@ -12,6 +12,12 @@ export class MessageService {
   ) {}
 
   async sendMessage(userId: string, sessionId: string, content: string) {
+    console.info('[MessageService] sendMessage called', {
+      userId,
+      sessionId,
+      contentLength: content.length
+    });
+
     const session = await this.prisma.session.findFirst({ where: { id: sessionId, userId } });
     if (!session) {
       throw new AppError('Session not found', 404);
@@ -30,6 +36,11 @@ export class MessageService {
       userInput: content
     });
 
+    console.info('[MessageService] AI response generated', {
+      sessionId,
+      responseLength: aiText.length
+    });
+
     const assistantMsg = await this.prisma.message.create({
       data: {
         sessionId,
@@ -44,6 +55,12 @@ export class MessageService {
   }
 
   async streamMessage(userId: string, sessionId: string, content: string): Promise<AsyncGenerator<string>> {
+    console.info('[MessageService] streamMessage called', {
+      userId,
+      sessionId,
+      contentLength: content.length
+    });
+
     const session = await this.prisma.session.findFirst({ where: { id: sessionId, userId } });
     if (!session) {
       throw new AppError('Session not found', 404);

@@ -12,6 +12,8 @@ export const errorMiddleware = (
   res: Response,
   _next: NextFunction
 ): void => {
+  console.error('[errorMiddleware] Request failed', err);
+
   if (err instanceof AppError) {
     res.status(err.statusCode).json({ message: err.message });
     return;

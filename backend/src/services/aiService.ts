@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { env } from '../config/env';
+import { AppError } from '../utils/appError';
 
 export interface SocraticPrompt {
   subject: string;
@@ -9,22 +10,34 @@ export interface SocraticPrompt {
 }
 
 export class AIService {
-  private client: OpenAI;
+  private client: OpenAI | null = null;
 
-  constructor() {
-    // 根据配置选择 AI 提供商
+  private getClient(): OpenAI {
+    if (this.client) {
+      return this.client;
+    }
+
     if (env.AI_PROVIDER === 'deepseek' && env.DEEPSEEK_API_KEY) {
       this.client = new OpenAI({
         apiKey: env.DEEPSEEK_API_KEY,
         baseURL: 'https://api.deepseek.com/v1'
       });
-    } else if (env.OPENAI_API_KEY) {
+      return this.client;
+    }
+
+    if (env.OPENAI_API_KEY) {
       this.client = new OpenAI({
         apiKey: env.OPENAI_API_KEY
       });
-    } else {
-      throw new Error('请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY');
+      return this.client;
     }
+
+    console.error('[AIService] No AI API key configured', {
+      provider: env.AI_PROVIDER,
+      hasDeepSeekKey: Boolean(env.DEEPSEEK_API_KEY),
+      hasOpenAIKey: Boolean(env.OPENAI_API_KEY)
+    });
+    throw new AppError('AI 服务未配置，请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY。', 503);
   }
 
   async generateResponse(prompt: SocraticPrompt): Promise<string> {
@@ -32,18 +45,48 @@ export class AIService {
       ? env.DEEPSEEK_MODEL 
       : env.OPENAI_MODEL;
 
-    const response = await this.client.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: this.buildSocraticSystemPrompt(prompt.subject, prompt.topic) },
-        ...prompt.conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-        { role: 'user', content: prompt.userInput }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    });
+    try {
+      console.info('[AIService] Generating response', {
+        provider: env.AI_PROVIDER,
+        model,
+        subject: prompt.subject,
+        hasTopic: Boolean(prompt.topic),
+        historyLength: prompt.conversationHistory.length
+      });
 
-    return response.choices[0]?.message?.content ?? '让我们继续一步步推理。你会先从哪里开始？';
+      const response = await this.getClient().chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: this.buildSocraticSystemPrompt(prompt.subject, prompt.topic) },
+          ...prompt.conversationHistory.map((m) => ({ role: m.role, content: m.content })),
+          { role: 'user', content: prompt.userInput }
+        ],
+        temperature: 0.7,
+        max_tokens: 500
+      });
+
+      const content = response.choices[0]?.message?.content?.trim();
+      if (!content) {
+        console.error('[AIService] Empty response from provider', {
+          provider: env.AI_PROVIDER,
+          model
+        });
+        throw new AppError('AI 服务返回了空响应，请稍后重试。', 502);
+      }
+
+      return content;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      console.error('[AIService] Failed to generate response', {
+        provider: env.AI_PROVIDER,
+        model,
+        error
+      });
+      throw new AppError('AI 对话生成失败，请检查 API Key 和模型配置。', 502);
+    }
   }
 
   async *streamResponse(prompt: SocraticPrompt): AsyncGenerator<string> {
@@ -51,23 +94,32 @@ export class AIService {
       ? env.DEEPSEEK_MODEL 
       : env.OPENAI_MODEL;
 
-    const stream = await this.client.chat.completions.create({
-      model,
-      messages: [
-        { role: 'system', content: this.buildSocraticSystemPrompt(prompt.subject, prompt.topic) },
-        ...prompt.conversationHistory.map((m) => ({ role: m.role, content: m.content })),
-        { role: 'user', content: prompt.userInput }
-      ],
-      temperature: 0.7,
-      max_tokens: 500,
-      stream: true
-    });
+    try {
+      const stream = await this.getClient().chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: this.buildSocraticSystemPrompt(prompt.subject, prompt.topic) },
+          ...prompt.conversationHistory.map((m) => ({ role: m.role, content: m.content })),
+          { role: 'user', content: prompt.userInput }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+        stream: true
+      });
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        yield content;
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content;
+        if (content) {
+          yield content;
+        }
       }
+    } catch (error) {
+      console.error('[AIService] Failed to stream response', {
+        provider: env.AI_PROVIDER,
+        model,
+        error
+      });
+      throw new AppError('AI 流式对话失败，请检查 API Key 和模型配置。', 502);
     }
   }
 

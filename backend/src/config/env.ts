@@ -3,6 +3,19 @@ import { z } from 'zod';
 
 config();
 
+const normalizeOptionalSecret = (value: unknown) => {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || /^\$\{[A-Z0-9_]+:-?\}$/.test(trimmed)) {
+    return undefined;
+  }
+
+  return trimmed;
+};
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().default(4000),
@@ -12,9 +25,9 @@ const envSchema = z.object({
   JWT_REFRESH_SECRET: z.string().min(16),
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL: z.string().default('7d'),
-  OPENAI_API_KEY: z.string().optional(),
+  OPENAI_API_KEY: z.preprocess(normalizeOptionalSecret, z.string().optional()),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
-  DEEPSEEK_API_KEY: z.string().optional(),
+  DEEPSEEK_API_KEY: z.preprocess(normalizeOptionalSecret, z.string().optional()),
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
   DEEPSEEK_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
   AI_PROVIDER: z.enum(['openai', 'deepseek']).default('deepseek'),

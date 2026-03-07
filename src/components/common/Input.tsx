@@ -17,11 +17,11 @@ export function Input({ label, error, helperText, className = "", id, forceLight
       </label>
       <input
         id={inputId}
-        className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 outline-none ring-primary placeholder:text-slate-400 focus:ring-2 ${
+        className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 caret-slate-900 outline-none ring-primary placeholder:text-slate-400 focus:ring-2 ${
           forceLight ? "" : "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 "
         }${
           error ? "border-red-400" : "border-slate-300"
-        } ${className}`}
+        } autofill:bg-white ${className}`}
         {...props}
       />
       {helperText ? <p className="text-xs text-slate-500">{helperText}</p> : null}

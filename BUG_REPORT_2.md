@@ -1,44 +1,59 @@
-# Critical Bug Report - Socratic Tutor
+# Critical Bug Report - Production Issues
 
-## Bug 1: Login Page Input Background is Black
-**Location**: `src/components/common/Input.tsx`, `src/pages/LoginPage.tsx`
-**Problem**: 
-- Input has `dark:bg-slate-900` which makes background black in dark mode
-- Login page doesn't enforce light theme
-- Input appears with black background which is ugly
-**Expected**: Clean white/light background for login/register inputs
+## Bug 1: Login Page Input Still Black Background
+**Current State**: 
+- LoginPage has `className="light"` on root div
+- Input has `forceLight` prop
+- BUT background still appears black to user
 
-**Fix Options**:
-1. Force light theme on Login/Register pages by adding `className="light"` to root element
-2. Or override dark mode styles specifically for auth pages
-3. Or remove dark mode support from auth pages entirely
+**Root Cause Suspected**:
+- `dark` class on <html> element may be overriding `light` class
+- Tailwind dark mode strategy interfering
+- Need to force light mode at html/body level for auth pages
 
-## Bug 2: Socratic Dialogue Not Working - Only Mock Response
-**Location**: `src/services/sessionService.ts`, Backend AI integration
-**Problem**:
-- `sendMessage` API call fails and falls back to catch block
-- Returns hardcoded mock: "如果从已知条件出发，你会如何拆解..."
-- No real AI dialogue, just repeats the same template
-- Backend AI service not properly configured or called
+**Required Fix**:
+- Use `useEffect` to remove `dark` class from document.documentElement on auth pages
+- OR use CSS to force light theme for auth pages
+- Ensure input background is white/light, text is dark
 
-**Expected Behavior**:
-- Real Socratic dialogue with AI
-- Questions should be contextual to the subject (physics, thermodynamics)
-- Progressive questioning that guides student thinking
-- Different responses based on conversation history
+## Bug 2: AI Dialogue Not Working - Still Mock Response
+**Current State**:
+- Frontend calls API
+- Backend has MessageService + AIService implemented
+- BUT user still sees: "如果从已知条件出发，你会如何拆解xxxx"
 
-**Root Cause Investigation Needed**:
-1. Is backend `/sessions/:id/messages` endpoint working?
-2. Is AI service (DeepSeek/OpenAI) properly configured?
-3. Are environment variables set correctly?
-4. Is the request format correct?
+**Diagnostic Steps Needed**:
+1. Check if frontend API call actually reaches backend
+2. Check backend logs for errors
+3. Check if DEEPSEEK_API_KEY is set in environment
+4. Check if AIService throws error and falls back
+5. Add comprehensive logging
 
-**Acceptance Criteria**:
-- [ ] Login inputs have proper light background
-- [ ] Real AI dialogue works (not mock fallback)
-- [ ] Questions are contextual and Socratic in style
-- [ ] Conversation history influences AI responses
-- [ ] Error handling shows proper messages if AI fails
+**Implementation Gaps to Check**:
+- Is `sessionService.sendMessage` calling real API or mock?
+- Is backend `/sessions/:id/messages` endpoint working?
+- Is AIService properly instantiated in container?
+- Are environment variables loaded?
 
-## Priority: CRITICAL
-Core functionality (AI dialogue) is not working.
+## Acceptance Criteria
+- [ ] Login inputs clearly visible (white bg, dark text)
+- [ ] Real AI dialogue works with contextual Socratic questions
+- [ ] Error messages shown if AI fails (not silent mock fallback)
+- [ ] Console/network tab shows actual API calls
+
+## Files to Investigate
+Frontend:
+- src/pages/LoginPage.tsx
+- src/pages/RegisterPage.tsx
+- src/components/common/Input.tsx
+- src/services/sessionService.ts
+- src/stores/sessionStore.ts
+
+Backend:
+- backend/src/services/messageService.ts
+- backend/src/services/aiService.ts
+- backend/src/config/container.ts
+- backend/src/config/env.ts
+- backend/.env
+
+Priority: CRITICAL

@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
@@ -20,6 +20,29 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? "/home";
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlDark = html.classList.contains("dark");
+    const previousBodyDark = body.classList.contains("dark");
+
+    html.classList.remove("dark");
+    body.classList.remove("dark");
+    html.classList.add("light");
+    body.classList.add("light");
+
+    return () => {
+      html.classList.remove("light");
+      body.classList.remove("light");
+      if (previousHtmlDark) {
+        html.classList.add("dark");
+      }
+      if (previousBodyDark) {
+        body.classList.add("dark");
+      }
+    };
+  }, []);
 
   const validate = () => {
     if (!form.email.includes("@")) {
@@ -53,7 +76,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-amber-50 p-4">
+    <div className="light flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-amber-50 p-4 text-slate-900">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-slate-900">欢迎回来</h1>
         <p className="mt-1 text-sm text-slate-500">登录后继续你的苏格拉底学习之旅</p>

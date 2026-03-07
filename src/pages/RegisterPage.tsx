@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
@@ -26,6 +26,29 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const previousHtmlDark = html.classList.contains("dark");
+    const previousBodyDark = body.classList.contains("dark");
+
+    html.classList.remove("dark");
+    body.classList.remove("dark");
+    html.classList.add("light");
+    body.classList.add("light");
+
+    return () => {
+      html.classList.remove("light");
+      body.classList.remove("light");
+      if (previousHtmlDark) {
+        html.classList.add("dark");
+      }
+      if (previousBodyDark) {
+        body.classList.add("dark");
+      }
+    };
+  }, []);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -56,7 +79,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="light flex min-h-screen items-center justify-center bg-gradient-to-br from-amber-50 to-blue-50 p-4">
+    <div className="light flex min-h-screen items-center justify-center bg-gradient-to-br from-amber-50 to-blue-50 p-4 text-slate-900">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-slate-900">创建账号</h1>
         <p className="mt-1 text-sm text-slate-500">选择身份并开始思考式学习</p>
