@@ -38,21 +38,11 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    defaults:
-      run:
-        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4
       
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      
-      - name: Create Railway Config
-        run: |
-          mkdir -p .railway
-          echo '{"projectId":"1a1f3f5e-d404-4de3-b51e-a8fd9f98ae4f"}' > .railway/config.json
-      
       - name: Deploy to Railway
-        run: railway up
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        uses: railwayapp/railway-deploy@v2
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: socratic-tutor-api
