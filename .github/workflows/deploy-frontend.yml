@@ -44,7 +44,9 @@ jobs:
       - name: Build Project Artifacts
         run: |
           echo "VITE_API_URL=https://socratic-tutor-app-production.up.railway.app/api/v1" > .env.production
-          vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+          cat .env.production
+          npm run build
+          ls -la dist/
       
-      - name: Deploy Project Artifacts to Vercel
-        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel
+        run: npx vercel deploy dist --prod --token=${{ secrets.VERCEL_TOKEN }}
