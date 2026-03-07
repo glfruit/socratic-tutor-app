@@ -200,4 +200,33 @@ describe("sessionStore", () => {
       isLoadingSession: false
     });
   });
+
+  it("rejects loading a session when the requested subject does not match", async () => {
+    vi.mocked(sessionService.getSessions).mockResolvedValue([
+      {
+        id: "session-physics",
+        title: "物理对话",
+        subject: "物理",
+        updatedAt: "2026-03-07T08:00:00Z"
+      }
+    ]);
+
+    const result = await useSessionStore.getState().loadSession("session-physics", {
+      subject: "数学",
+      level: "HIGH_SCHOOL"
+    });
+
+    expect(result).toBe(false);
+    expect(sessionService.getSessionMessages).not.toHaveBeenCalled();
+    expect(useSessionStore.getState()).toMatchObject({
+      currentSessionId: null,
+      messages: [],
+      isLoadingSession: false,
+      error: "当前学科与会话不匹配，已开始新的对话。",
+      activeContext: {
+        subject: "数学",
+        level: "HIGH_SCHOOL"
+      }
+    });
+  });
 });

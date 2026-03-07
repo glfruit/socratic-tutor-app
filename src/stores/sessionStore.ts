@@ -27,7 +27,7 @@ interface SessionState {
   isLoadingSession: boolean;
   error: string | null;
   activeContext: SessionContext | null;
-  loadSession: (sessionId: string) => Promise<void>;
+  loadSession: (sessionId: string, options?: SendMessageOptions) => Promise<boolean>;
   resetSession: () => void;
   clearError: () => void;
   sendMessage: (content: string, options?: SendMessageOptions) => Promise<SendMessageResult>;
@@ -57,26 +57,60 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   error: null,
   activeContext: null,
 
-  async loadSession(sessionId) {
+  async loadSession(sessionId, options = {}) {
     const requestId = ++latestLoadRequestId;
-    console.info("[sessionStore] Loading session", { sessionId, requestId });
+    const requestedContext = normalizeContext(options);
+    console.info("[sessionStore] Loading session", { sessionId, requestId, requestedContext });
     set({ isLoadingSession: true, error: null });
     try {
+      if (requestedContext.subject) {
+        const sessions = await sessionService.getSessions();
+        const summary = sessions.find((session) => session.id === sessionId);
+
+        if (!summary || summary.subject !== requestedContext.subject) {
+          if (requestId !== latestLoadRequestId) {
+            console.info("[sessionStore] Ignoring stale session context mismatch", {
+              sessionId,
+              requestId,
+              latestLoadRequestId
+            });
+            return false;
+          }
+
+          console.warn("[sessionStore] Rejecting session load due to subject mismatch", {
+            sessionId,
+            requestId,
+            expectedSubject: requestedContext.subject,
+            actualSubject: summary?.subject ?? null
+          });
+          set({
+            currentSessionId: null,
+            messages: [],
+            isLoadingSession: false,
+            error: "当前学科与会话不匹配，已开始新的对话。",
+            activeContext: requestedContext
+          });
+          return false;
+        }
+      }
+
       const messages = await sessionService.getSessionMessages(sessionId);
       if (requestId !== latestLoadRequestId) {
         console.info("[sessionStore] Ignoring stale session load", { sessionId, requestId, latestLoadRequestId });
-        return;
+        return false;
       }
 
       console.info("[sessionStore] Session loaded", { sessionId, requestId, messageCount: messages.length });
-      set({ currentSessionId: sessionId, messages, isLoadingSession: false, activeContext: null });
+      set({ currentSessionId: sessionId, messages, isLoadingSession: false, activeContext: requestedContext });
+      return true;
     } catch {
       if (requestId !== latestLoadRequestId) {
         console.info("[sessionStore] Ignoring stale session load failure", { sessionId, requestId, latestLoadRequestId });
-        return;
+        return false;
       }
 
       set({ error: "会话加载失败，请稍后重试。", isLoadingSession: false });
+      return false;
     }
   },
 

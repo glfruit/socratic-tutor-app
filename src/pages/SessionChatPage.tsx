@@ -6,6 +6,12 @@ import { useSessionStore } from "@/stores/sessionStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import { DEFAULT_LEARNING_LEVEL, getLearningLevelLabel } from "@/utils/learningLevel";
 
+const contextMatchesRoute = (
+  activeContext: { subject: string | null; level: string | null } | null,
+  subject: string,
+  level: string
+) => activeContext?.subject === subject && activeContext?.level === level;
+
 export function SessionChatPage() {
   const { id } = useParams();
   const location = useLocation();
@@ -22,6 +28,7 @@ export function SessionChatPage() {
     isStreaming,
     isLoadingSession,
     error,
+    activeContext,
     loadSession,
     resetSession,
     clearError,
@@ -33,6 +40,7 @@ export function SessionChatPage() {
     isStreaming: state.isStreaming,
     isLoadingSession: state.isLoadingSession,
     error: state.error,
+    activeContext: state.activeContext,
     loadSession: state.loadSession,
     resetSession: state.resetSession,
     clearError: state.clearError,
@@ -80,16 +88,16 @@ export function SessionChatPage() {
       return;
     }
 
-    void loadSession(id);
-  }, [id, isFreshRoute, loadSession]);
+    void loadSession(id, { subject, level: levelValue });
+  }, [id, isFreshRoute, levelValue, loadSession, subject]);
 
   useEffect(() => {
-    if (id === "new" && currentSessionId) {
+    if (id === "new" && currentSessionId && contextMatchesRoute(activeContext, subject, levelValue)) {
       navigate(`/sessions/${currentSessionId}?subject=${encodeURIComponent(subject)}&level=${encodeURIComponent(levelFromQuery ?? defaultLevel)}`, {
         replace: true
       });
     }
-  }, [currentSessionId, defaultLevel, id, levelFromQuery, navigate, subject]);
+  }, [activeContext, currentSessionId, defaultLevel, id, levelFromQuery, levelValue, navigate, subject]);
 
   useEffect(() => {
     clearError();
