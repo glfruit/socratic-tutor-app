@@ -3,8 +3,8 @@ name: Deploy Backend to Railway
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
+    paths:
+      - 'backend/**'
   workflow_dispatch:
 
 jobs:
@@ -32,29 +32,5 @@ jobs:
       - name: Run lint
         run: npm run lint
 
-  deploy:
-    needs: test
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    defaults:
-      run:
-        working-directory: ./backend
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-      
-      - name: Create Railway Config
-        run: |
-          mkdir -p .railway
-          cat > .railway/config.json << EOF
-          {
-            "projectId": "1a1f3f5e-d404-4de3-b51e-a8fd9f98ae4f"
-          }
-          EOF
-      
-      - name: Deploy to Railway
-        run: railway up --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+  # 注意：实际部署由 Railway GitHub 集成自动处理
+  # 此 workflow 仅用于测试，部署会在 Railway 自动触发
