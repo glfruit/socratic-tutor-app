@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { preferenceService } from "@/services/preferenceService";
 import { useAuthStore } from "@/stores/authStore";
+import { DEFAULT_LEARNING_LEVEL } from "@/utils/learningLevel";
 import type { LearningLevel, ThemePreference, UserPreferences } from "@/types";
 
 interface PreferencesState extends UserPreferences {
@@ -22,7 +23,7 @@ const applyTheme = (theme: ThemePreference) => {
 };
 
 export const usePreferencesStore = create<PreferencesState>((set) => ({
-  defaultLevel: "HIGH_SCHOOL",
+  defaultLevel: DEFAULT_LEARNING_LEVEL,
   theme: "system",
   isLoading: false,
 

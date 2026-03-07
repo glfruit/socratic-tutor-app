@@ -17,7 +17,8 @@ describe("sessionStore", () => {
       messages: [],
       isStreaming: false,
       isLoadingSession: false,
-      error: null
+      error: null,
+      activeContext: null
     });
   });
 
@@ -71,7 +72,8 @@ describe("sessionStore", () => {
       messages: [],
       isStreaming: false,
       isLoadingSession: false,
-      error: null
+      error: null,
+      activeContext: null
     });
     vi.mocked(sessionService.sendMessage).mockRejectedValue(new Error("发送失败"));
 
@@ -81,5 +83,54 @@ describe("sessionStore", () => {
     expect(useSessionStore.getState().error).toBe("发送失败");
     expect(useSessionStore.getState().messages).toEqual([]);
     expect(useSessionStore.getState().isStreaming).toBe(false);
+  });
+
+  it("creates a fresh session when the subject context changes", async () => {
+    useSessionStore.setState({
+      currentSessionId: "session-physics",
+      messages: [
+        {
+          id: "message-1",
+          role: "user",
+          content: "旧会话内容",
+          createdAt: "2026-03-07T08:00:00Z"
+        }
+      ],
+      isStreaming: false,
+      isLoadingSession: false,
+      error: null,
+      activeContext: {
+        subject: "物理",
+        level: "HIGH_SCHOOL"
+      }
+    });
+    vi.mocked(sessionService.createSession).mockResolvedValue({
+      id: "session-math",
+      title: "数学对话",
+      subject: "数学",
+      updatedAt: "2026-03-07T08:10:00Z"
+    });
+    vi.mocked(sessionService.sendMessage).mockResolvedValue({
+      id: "assistant-2",
+      role: "assistant",
+      content: "",
+      createdAt: "2026-03-07T08:10:01Z"
+    });
+
+    const result = await useSessionStore.getState().sendMessage("新问题", {
+      subject: "数学",
+      level: "HIGH_SCHOOL"
+    });
+
+    expect(result).toEqual({ ok: true, sessionId: "session-math" });
+    expect(sessionService.createSession).toHaveBeenCalledWith({
+      subject: "数学",
+      level: "HIGH_SCHOOL",
+      title: "数学对话"
+    });
+    expect(sessionService.sendMessage).toHaveBeenCalledWith("session-math", "新问题");
+    expect(useSessionStore.getState().currentSessionId).toBe("session-math");
+    expect(useSessionStore.getState().messages).toHaveLength(2);
+    expect(useSessionStore.getState().messages[0]?.content).toBe("新问题");
   });
 });

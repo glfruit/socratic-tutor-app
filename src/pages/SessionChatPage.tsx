@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams, useParams } from "react-router-dom";
 import { MessageInput } from "@/components/dialogue/MessageInput";
 import { MessageList } from "@/components/dialogue/MessageList";
 import { useSessionStore } from "@/stores/sessionStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
+import { DEFAULT_LEARNING_LEVEL, getLearningLevelLabel } from "@/utils/learningLevel";
 
 export function SessionChatPage() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ export function SessionChatPage() {
   const subject = searchParams.get("subject") ?? "通用";
   const levelFromQuery = searchParams.get("level");
   const defaultLevel = usePreferencesStore((state) => state.defaultLevel);
+  const routeSessionKeyRef = useRef<string | null>(null);
 
   const {
     currentSessionId,
@@ -47,6 +49,29 @@ export function SessionChatPage() {
   }, [id, loadSession, resetSession]);
 
   useEffect(() => {
+    const routeLevel = levelFromQuery ?? defaultLevel ?? DEFAULT_LEARNING_LEVEL;
+    const nextRouteKey = `${subject}::${routeLevel}`;
+
+    if (routeSessionKeyRef.current === null) {
+      routeSessionKeyRef.current = nextRouteKey;
+      return;
+    }
+
+    if (routeSessionKeyRef.current === nextRouteKey) {
+      return;
+    }
+
+    routeSessionKeyRef.current = nextRouteKey;
+    resetSession();
+
+    if (id !== "new") {
+      navigate(`/sessions/new?subject=${encodeURIComponent(subject)}&level=${encodeURIComponent(routeLevel)}`, {
+        replace: true
+      });
+    }
+  }, [defaultLevel, id, levelFromQuery, navigate, resetSession, subject]);
+
+  useEffect(() => {
     if (id === "new" && currentSessionId) {
       navigate(`/sessions/${currentSessionId}?subject=${encodeURIComponent(subject)}&level=${encodeURIComponent(levelFromQuery ?? defaultLevel)}`, {
         replace: true
@@ -58,7 +83,8 @@ export function SessionChatPage() {
     clearError();
   }, [clearError, id]);
 
-  const levelLabel = levelFromQuery ?? defaultLevel;
+  const levelValue = levelFromQuery ?? defaultLevel ?? DEFAULT_LEARNING_LEVEL;
+  const levelLabel = getLearningLevelLabel(levelValue);
   const sessionStatus = isLoadingSession ? "正在载入会话" : isStreaming ? "导师正在生成回应" : "可以继续提问";
 
   return (
@@ -91,7 +117,7 @@ export function SessionChatPage() {
       <MessageList messages={messages} isLoading={isLoadingSession} />
 
       <MessageInput
-        onSend={(content) => sendMessage(content, { subject, level: levelLabel })}
+        onSend={(content) => sendMessage(content, { subject, level: levelValue })}
         isStreaming={isStreaming}
         isDisabled={isLoadingSession}
         error={error}

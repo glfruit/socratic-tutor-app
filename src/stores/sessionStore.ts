@@ -7,6 +7,11 @@ interface SendMessageOptions {
   level?: string | null;
 }
 
+interface SessionContext {
+  subject: string | null;
+  level: string | null;
+}
+
 interface SendMessageResult {
   ok: boolean;
   sessionId?: string;
@@ -19,6 +24,7 @@ interface SessionState {
   isStreaming: boolean;
   isLoadingSession: boolean;
   error: string | null;
+  activeContext: SessionContext | null;
   loadSession: (sessionId: string) => Promise<void>;
   resetSession: () => void;
   clearError: () => void;
@@ -28,25 +34,39 @@ interface SessionState {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const normalizeContext = (options: SendMessageOptions = {}): SessionContext => ({
+  subject: options.subject ?? null,
+  level: options.level ?? null
+});
+
+const contextsMatch = (left: SessionContext | null, right: SessionContext) => {
+  if (!left) {
+    return false;
+  }
+
+  return left.subject === right.subject && left.level === right.level;
+};
+
 export const useSessionStore = create<SessionState>((set, get) => ({
   currentSessionId: null,
   messages: [],
   isStreaming: false,
   isLoadingSession: false,
   error: null,
+  activeContext: null,
 
   async loadSession(sessionId) {
     set({ isLoadingSession: true, error: null });
     try {
       const messages = await sessionService.getSessionMessages(sessionId);
-      set({ currentSessionId: sessionId, messages, isLoadingSession: false });
+      set({ currentSessionId: sessionId, messages, isLoadingSession: false, activeContext: null });
     } catch {
       set({ error: "会话加载失败，请稍后重试。", isLoadingSession: false });
     }
   },
 
   resetSession() {
-    set({ currentSessionId: null, messages: [], isStreaming: false, isLoadingSession: false, error: null });
+    set({ currentSessionId: null, messages: [], isStreaming: false, isLoadingSession: false, error: null, activeContext: null });
   },
 
   clearError() {
@@ -55,12 +75,20 @@ export const useSessionStore = create<SessionState>((set, get) => ({
 
   async sendMessage(content, options = {}) {
     const trimmedContent = content.trim();
-    const { currentSessionId, messages, isStreaming } = get();
+    const { currentSessionId, messages, isStreaming, activeContext } = get();
     if (isStreaming || !trimmedContent) {
       return { ok: false };
     }
 
-    let sessionId = currentSessionId;
+    const requestedContext = normalizeContext(options);
+    const shouldStartFreshSession = Boolean(currentSessionId && activeContext && !contextsMatch(activeContext, requestedContext));
+
+    let sessionId = shouldStartFreshSession ? null : currentSessionId;
+    let nextMessages = shouldStartFreshSession ? [] : messages;
+
+    if (shouldStartFreshSession) {
+      set({ currentSessionId: null, messages: [], error: null, activeContext: requestedContext });
+    }
 
     try {
       if (!sessionId) {
@@ -70,7 +98,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           title: options.subject ? `${options.subject}对话` : undefined
         });
         sessionId = session.id;
-        set({ currentSessionId: session.id, error: null });
+        set({ currentSessionId: session.id, error: null, activeContext: requestedContext });
       }
     } catch {
       set({ error: "新会话创建失败，请稍后重试。" });
@@ -84,7 +112,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       createdAt: new Date().toISOString()
     };
 
-    set({ messages: [...messages, userMessage], isStreaming: true, error: null });
+    set({ messages: [...nextMessages, userMessage], isStreaming: true, error: null });
 
     try {
       const assistantMessage = await sessionService.sendMessage(sessionId, trimmedContent);
@@ -120,7 +148,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         error
       });
       set({
-        messages,
+        messages: nextMessages,
         isStreaming: false,
         error: message
       });
