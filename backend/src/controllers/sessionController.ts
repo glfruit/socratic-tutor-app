@@ -17,6 +17,11 @@ export class SessionController {
     res.json(session);
   }
 
+  async listMessages(req: Request, res: Response) {
+    const messages = await container.sessionService.listMessages(req.user!.userId, req.params.id);
+    res.json(messages);
+  }
+
   async update(req: Request, res: Response) {
     const session = await container.sessionService.updateSession(req.user!.userId, req.params.id, req.body);
     res.json(session);

@@ -1,4 +1,4 @@
-import { api } from "@/services/api";
+import { api, buildApiPath } from "@/services/api";
 import { mockMastery, mockProgressStats, mockRadar } from "@/services/mockData";
 import type { MasteryRecord, ProgressStat } from "@/types";
 
@@ -11,7 +11,7 @@ interface ProgressData {
 export const progressService = {
   async getDashboard(): Promise<ProgressData> {
     try {
-      const response = await api.get<ProgressData>("/progress/dashboard");
+      const response = await api.get<ProgressData>(buildApiPath("v1", "/progress/dashboard"));
       return response.data;
     } catch {
       return {

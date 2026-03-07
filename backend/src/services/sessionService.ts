@@ -28,6 +28,15 @@ export class SessionService {
     return session;
   }
 
+  async listMessages(userId: string, sessionId: string) {
+    await this.getSession(userId, sessionId);
+
+    return this.prisma.message.findMany({
+      where: { sessionId },
+      orderBy: { createdAt: 'asc' }
+    });
+  }
+
   async updateSession(
     userId: string,
     sessionId: string,

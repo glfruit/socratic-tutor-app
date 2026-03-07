@@ -1,8 +1,17 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/authStore";
 
+const rawBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:10003";
+const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
+const apiOrigin = normalizedBaseUrl.replace(/\/api\/v\d+$/, "");
+
+export const buildApiPath = (version: "v1" | "v2", path: string) =>
+  `/api/${version}${path.startsWith("/") ? path : `/${path}`}`;
+
+export const buildApiUrl = (version: "v1" | "v2", path: string) => `${apiOrigin}${buildApiPath(version, path)}`;
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:10003/api/v2",
+  baseURL: apiOrigin,
   timeout: 30000
 });
 

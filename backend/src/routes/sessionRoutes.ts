@@ -12,6 +12,7 @@ const messageController = new MessageController();
 router.post('/', validateBody(sessionCreateSchema), asyncHandler(controller.create.bind(controller)));
 router.get('/', asyncHandler(controller.list.bind(controller)));
 router.get('/:id', asyncHandler(controller.get.bind(controller)));
+router.get('/:id/messages', asyncHandler(controller.listMessages.bind(controller)));
 router.patch('/:id', validateBody(sessionUpdateSchema), asyncHandler(controller.update.bind(controller)));
 router.delete('/:id', asyncHandler(controller.delete.bind(controller)));
 

@@ -4,9 +4,10 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
   helperText?: string;
+  forceLight?: boolean;
 }
 
-export function Input({ label, error, helperText, className = "", id, ...props }: InputProps) {
+export function Input({ label, error, helperText, className = "", id, forceLight = false, ...props }: InputProps) {
   const inputId = id ?? label;
 
   return (
@@ -16,7 +17,9 @@ export function Input({ label, error, helperText, className = "", id, ...props }
       </label>
       <input
         id={inputId}
-        className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 outline-none ring-primary placeholder:text-slate-400 focus:ring-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 ${
+        className={`w-full rounded-lg border bg-white px-3 py-2 text-slate-900 outline-none ring-primary placeholder:text-slate-400 focus:ring-2 ${
+          forceLight ? "" : "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 "
+        }${
           error ? "border-red-400" : "border-slate-300"
         } ${className}`}
         {...props}

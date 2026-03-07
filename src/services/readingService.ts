@@ -1,13 +1,14 @@
-import { api } from "@/services/api";
+import { api, buildApiPath, buildApiUrl } from "@/services/api";
 import { mockReadingSessions } from "@/services/mockData";
 import type { ReadingMessageContext, ReadingSession } from "@/types";
+import { useAuthStore } from "@/stores/authStore";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export const readingService = {
   async createSession(documentId: string, chapterId?: string): Promise<ReadingSession> {
     try {
-      const response = await api.post<ReadingSession>("/reading-sessions", { documentId, chapterId });
+      const response = await api.post<ReadingSession>(buildApiPath("v2", "/reading-sessions"), { documentId, chapterId });
       return response.data;
     } catch {
       const session = mockReadingSessions[documentId];
@@ -17,7 +18,7 @@ export const readingService = {
 
   async getSession(sessionId: string): Promise<ReadingSession> {
     try {
-      const response = await api.get<ReadingSession>(`/reading-sessions/${sessionId}`);
+      const response = await api.get<ReadingSession>(buildApiPath("v2", `/reading-sessions/${sessionId}`));
       return response.data;
     } catch {
       return Object.values(mockReadingSessions).find((session) => session.id === sessionId) ?? Object.values(mockReadingSessions)[0];
@@ -31,13 +32,12 @@ export const readingService = {
     onChunk?: (chunk: string) => void
   ): Promise<{ messageId: string; content: string }> {
     try {
-      const response = await fetch(`${api.defaults.baseURL}/reading-sessions/${sessionId}/messages`, {
+      const token = useAuthStore.getState().token;
+      const response = await fetch(buildApiUrl("v2", `/reading-sessions/${sessionId}/messages`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(api.defaults.headers.common.Authorization
-            ? { Authorization: String(api.defaults.headers.common.Authorization) }
-            : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ content, context })
       });
@@ -99,7 +99,7 @@ export const readingService = {
 
   async updateProgress(sessionId: string, chapterId: string, progress: number): Promise<void> {
     try {
-      await api.patch(`/reading-sessions/${sessionId}/progress`, { chapterId, progress });
+      await api.patch(buildApiPath("v2", `/reading-sessions/${sessionId}/progress`), { chapterId, progress });
     } catch {
       return;
     }

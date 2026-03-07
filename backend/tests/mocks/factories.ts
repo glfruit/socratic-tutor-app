@@ -17,6 +17,7 @@ export const createPrismaMock = () => ({
   },
   message: {
     create: vi.fn(),
+    findMany: vi.fn(),
     deleteMany: vi.fn(),
     count: vi.fn()
   },

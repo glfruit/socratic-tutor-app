@@ -56,7 +56,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-amber-50 to-blue-50 p-4">
+    <div className="light flex min-h-screen items-center justify-center bg-gradient-to-br from-amber-50 to-blue-50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-card">
         <h1 className="text-2xl font-semibold text-slate-900">创建账号</h1>
         <p className="mt-1 text-sm text-slate-500">选择身份并开始思考式学习</p>
@@ -64,16 +64,19 @@ export function RegisterPage() {
         <form className="mt-5 space-y-4" onSubmit={onSubmit}>
           <Input
             label="姓名"
+            forceLight
             value={form.name}
             onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
           />
           <Input
             label="邮箱"
+            forceLight
             value={form.email}
             onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
           />
           <Input
             label="密码"
+            forceLight
             type="password"
             value={form.password}
             onChange={(event) => setForm((prev) => ({ ...prev, password: event.target.value }))}
@@ -86,7 +89,7 @@ export function RegisterPage() {
               id="role"
               value={form.role}
               onChange={(event) => setForm((prev) => ({ ...prev, role: event.target.value as UserRole }))}
-              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-primary dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="STUDENT">学生</option>
               <option value="TEACHER">教师</option>

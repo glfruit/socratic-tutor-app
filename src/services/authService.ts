@@ -1,4 +1,4 @@
-import { api } from "@/services/api";
+import { api, buildApiPath } from "@/services/api";
 import type { User, UserRole } from "@/types";
 
 interface LoginInput {
@@ -23,7 +23,7 @@ interface AuthResponse {
 
 export const authService = {
   async login(input: LoginInput): Promise<{ user: User; token: string }> {
-    const response = await api.post<AuthResponse>("/auth/login", input);
+    const response = await api.post<AuthResponse>(buildApiPath("v1", "/auth/login"), input);
     return {
       user: response.data.user,
       token: response.data.tokens.accessToken
@@ -31,7 +31,7 @@ export const authService = {
   },
 
   async register(input: RegisterInput): Promise<{ user: User; token: string }> {
-    const response = await api.post<AuthResponse>("/auth/register", input);
+    const response = await api.post<AuthResponse>(buildApiPath("v1", "/auth/register"), input);
     return {
       user: response.data.user,
       token: response.data.tokens.accessToken

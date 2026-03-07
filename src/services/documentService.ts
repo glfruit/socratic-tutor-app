@@ -1,4 +1,4 @@
-import { api } from "@/services/api";
+import { api, buildApiPath } from "@/services/api";
 import { mockDocumentDetails, mockDocuments } from "@/services/mockData";
 import type { DocumentDetail, DocumentFilters, DocumentSummary, UploadDocumentInput } from "@/types";
 
@@ -20,7 +20,7 @@ const applyFilters = (items: DocumentSummary[], filters?: Partial<DocumentFilter
 export const documentService = {
   async getDocuments(filters?: Partial<DocumentFilters>): Promise<DocumentSummary[]> {
     try {
-      const response = await api.get<{ items: DocumentSummary[] }>("/documents", {
+      const response = await api.get<{ items: DocumentSummary[] }>(buildApiPath("v2", "/documents"), {
         params: {
           search: filters?.search || undefined,
           type: filters?.type === "ALL" ? undefined : filters?.type,
@@ -35,7 +35,7 @@ export const documentService = {
 
   async getDocument(documentId: string): Promise<DocumentDetail> {
     try {
-      const response = await api.get<DocumentDetail>(`/documents/${documentId}`);
+      const response = await api.get<DocumentDetail>(buildApiPath("v2", `/documents/${documentId}`));
       return response.data;
     } catch {
       return mockDocumentDetails[documentId] ?? { ...mockDocuments[0], id: documentId, chapters: [] };
@@ -54,7 +54,7 @@ export const documentService = {
     }
 
     try {
-      const response = await api.post<DocumentSummary>("/documents", formData, {
+      const response = await api.post<DocumentSummary>(buildApiPath("v2", "/documents"), formData, {
         headers: { "Content-Type": "multipart/form-data" }
       });
       return response.data;
@@ -73,7 +73,7 @@ export const documentService = {
 
   async deleteDocument(documentId: string): Promise<void> {
     try {
-      await api.delete(`/documents/${documentId}`);
+      await api.delete(buildApiPath("v2", `/documents/${documentId}`));
     } catch {
       return;
     }
