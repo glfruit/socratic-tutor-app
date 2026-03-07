@@ -16,7 +16,9 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
   DEEPSEEK_API_KEY: z.string().optional(),
   DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  DEEPSEEK_EMBEDDING_MODEL: z.string().default('text-embedding-3-small'),
   AI_PROVIDER: z.enum(['openai', 'deepseek']).default('deepseek'),
+  FILE_STORAGE_PATH: z.string().default('uploads'),
   CORS_ORIGIN: z.string().default('http://localhost:3000')
 });
 

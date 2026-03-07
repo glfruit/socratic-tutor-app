@@ -7,18 +7,21 @@ interface AppLayoutProps {
 }
 
 const navItems = [
-  { to: "/dashboard", label: "仪表盘" },
+  { to: "/home", label: "主页" },
   { to: "/subjects", label: "学科" },
+  { to: "/library", label: "文档库" },
+  { to: "/upload", label: "上传" },
   { to: "/sessions", label: "会话" },
-  { to: "/progress", label: "进度" }
+  { to: "/progress", label: "进度" },
+  { to: "/settings", label: "设置" }
 ];
 
 export function AppLayout({ onLogout, children }: PropsWithChildren<AppLayoutProps>) {
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/dashboard" className="text-lg font-semibold text-primary">
+    <div className="min-h-screen bg-background text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+          <Link to="/home" className="text-lg font-semibold text-primary">
             Socratic Tutor
           </Link>
           <nav className="hidden gap-4 sm:flex">
@@ -27,7 +30,7 @@ export function AppLayout({ onLogout, children }: PropsWithChildren<AppLayoutPro
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `text-sm font-medium ${isActive ? "text-primary" : "text-slate-600"}`
+                  `text-sm font-medium ${isActive ? "text-primary" : "text-slate-600 dark:text-slate-300"}`
                 }
               >
                 {item.label}
@@ -39,7 +42,7 @@ export function AppLayout({ onLogout, children }: PropsWithChildren<AppLayoutPro
           </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+      <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
     </div>
   );
 }

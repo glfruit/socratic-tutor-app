@@ -32,6 +32,36 @@ enum MasteryLevel {
   MASTERY
 }
 
+enum DocumentType {
+  BOOK
+  MATERIAL
+}
+
+enum DocumentStatus {
+  PROCESSING
+  READY
+  ERROR
+}
+
+enum ReadingSessionStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum BookMessageRole {
+  USER
+  ASSISTANT
+}
+
+enum Level {
+  ELEMENTARY
+  MIDDLE_SCHOOL
+  HIGH_SCHOOL
+  UNIVERSITY
+  GRADUATE
+}
+
 model User {
   id              String           @id @default(uuid())
   email           String           @unique
@@ -41,6 +71,9 @@ model User {
   preferences     Json             @default("{}")
   sessions        Session[]
   learningRecords LearningRecord[]
+  documents       Document[]
+  readingSessions BookReadingSession[]
+  userPreference  UserPreference?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -96,4 +129,102 @@ model KnowledgePoint {
   createdAt DateTime @default(now())
 
   @@unique([subjectId, name])
+}
+
+model Document {
+  id              String               @id @default(uuid())
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id])
+  type            DocumentType
+  status          DocumentStatus       @default(PROCESSING)
+  title           String
+  author          String?
+  description     String?
+  originalName    String
+  storagePath     String
+  mimeType        String
+  fileSize        Int
+  coverUrl        String?
+  errorMessage    String?
+  processedAt     DateTime?
+  chapters        Chapter[]
+  chunks          DocumentChunk[]
+  readingSessions BookReadingSession[]
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  @@index([userId, type])
+  @@index([status])
+}
+
+model Chapter {
+  id                String               @id @default(uuid())
+  documentId        String
+  document          Document             @relation(fields: [documentId], references: [id])
+  title             String
+  content           String               @db.Text
+  orderIndex        Int
+  startPage         Int?
+  endPage           Int?
+  chunks            DocumentChunk[]
+  activeInSessions  BookReadingSession[] @relation("CurrentChapter")
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([documentId, orderIndex])
+}
+
+model DocumentChunk {
+  id         String                     @id @default(uuid())
+  documentId String
+  document   Document                   @relation(fields: [documentId], references: [id])
+  chapterId  String?
+  chapter    Chapter?                   @relation(fields: [chapterId], references: [id])
+  content    String                     @db.Text
+  orderIndex Int
+  tokenCount Int?
+  metadata   Json?
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime                   @default(now())
+
+  @@index([documentId])
+  @@index([chapterId])
+}
+
+model BookReadingSession {
+  id               String               @id @default(uuid())
+  userId           String
+  user             User                 @relation(fields: [userId], references: [id])
+  documentId       String
+  document         Document             @relation(fields: [documentId], references: [id])
+  currentChapterId String?
+  currentChapter   Chapter?             @relation("CurrentChapter", fields: [currentChapterId], references: [id])
+  status           ReadingSessionStatus @default(ACTIVE)
+  progress         Float                @default(0)
+  messages         BookMessage[]
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  @@index([userId, status])
+}
+
+model BookMessage {
+  id        String          @id @default(uuid())
+  sessionId String
+  session   BookReadingSession @relation(fields: [sessionId], references: [id])
+  role      BookMessageRole
+  content   String          @db.Text
+  metadata  Json?
+  createdAt DateTime        @default(now())
+
+  @@index([sessionId, createdAt])
+}
+
+model UserPreference {
+  id        String   @id @default(uuid())
+  userId     String   @unique
+  user       User     @relation(fields: [userId], references: [id])
+  level      Level    @default(HIGH_SCHOOL)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

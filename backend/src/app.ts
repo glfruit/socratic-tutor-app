@@ -6,6 +6,9 @@ import authRoutes from './routes/authRoutes';
 import sessionRoutes from './routes/sessionRoutes';
 import progressRoutes from './routes/progressRoutes';
 import subjectRoutes from './routes/subjectRoutes';
+import documentRoutes from './routes/documentRoutes';
+import readingRoutes from './routes/readingRoutes';
+import preferenceRoutes from './routes/preferenceRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { container } from './config/container';
 import { rateLimitMiddleware } from './middleware/rateLimitMiddleware';
@@ -35,6 +38,9 @@ export const createApp = () => {
   app.use('/api/v1/sessions', sessionRoutes);
   app.use('/api/v1/progress', progressRoutes);
   app.use('/api/v1/subjects', subjectRoutes);
+  app.use('/api/v2/documents', documentRoutes);
+  app.use('/api/v2/reading-sessions', readingRoutes);
+  app.use('/api/v2/preferences', preferenceRoutes);
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

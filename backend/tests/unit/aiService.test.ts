@@ -1,44 +1,111 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+const createOpenAIMock = () => {
+  const create = vi.fn();
+  const OpenAI = vi.fn().mockImplementation(() => ({
+    chat: {
+      completions: {
+        create
+      }
+    }
+  }));
+
+  return { OpenAI, create };
+};
 
 describe('AIService', () => {
-  const originalEnv = process.env;
-
-  beforeEach(() => {
-    process.env = { ...originalEnv };
-  });
-
   afterEach(() => {
-    process.env = originalEnv;
     vi.resetModules();
+    vi.unmock('openai');
+    vi.unmock('../../src/config/env');
   });
 
-  it('configures DeepSeek correctly', async () => {
-    process.env.AI_PROVIDER = 'deepseek';
-    process.env.DEEPSEEK_API_KEY = 'test-key';
-    process.env.DEEPSEEK_MODEL = 'deepseek-chat';
+  it('uses DeepSeek configuration and returns a fallback response when content is empty', async () => {
+    const { OpenAI, create } = createOpenAIMock();
+    create.mockResolvedValue({ choices: [] });
+    vi.doMock('openai', () => ({ default: OpenAI }));
+    vi.doMock('../../src/config/env', () => ({
+      env: {
+        AI_PROVIDER: 'deepseek',
+        DEEPSEEK_API_KEY: 'deepseek-key',
+        DEEPSEEK_MODEL: 'deepseek-chat',
+        OPENAI_API_KEY: undefined,
+        OPENAI_MODEL: 'gpt-4o-mini'
+      }
+    }));
 
-    // 验证环境变量配置
-    expect(process.env.AI_PROVIDER).toBe('deepseek');
-    expect(process.env.DEEPSEEK_API_KEY).toBe('test-key');
-    expect(process.env.DEEPSEEK_MODEL).toBe('deepseek-chat');
+    const { AIService } = await import('../../src/services/aiService');
+    const service = new AIService();
+    const response = await service.generateResponse({
+      subject: 'math',
+      topic: 'algebra',
+      conversationHistory: [{ role: 'user', content: 'hello' }],
+      userInput: 'help me'
+    });
+
+    expect(OpenAI).toHaveBeenCalledWith({
+      apiKey: 'deepseek-key',
+      baseURL: 'https://api.deepseek.com/v1'
+    });
+    expect(response).toContain('一步步推理');
+    expect(create).toHaveBeenCalledOnce();
   });
 
-  it('configures OpenAI correctly', async () => {
-    process.env.AI_PROVIDER = 'openai';
-    process.env.OPENAI_API_KEY = 'test-openai-key';
-    process.env.OPENAI_MODEL = 'gpt-4';
+  it('streams content with OpenAI configuration', async () => {
+    async function* stream() {
+      yield { choices: [{ delta: { content: 'A' } }] };
+      yield { choices: [{ delta: { content: 'B' } }] };
+    }
 
-    expect(process.env.AI_PROVIDER).toBe('openai');
-    expect(process.env.OPENAI_API_KEY).toBe('test-openai-key');
-    expect(process.env.OPENAI_MODEL).toBe('gpt-4');
+    const { OpenAI, create } = createOpenAIMock();
+    create.mockResolvedValue(stream());
+    vi.doMock('openai', () => ({ default: OpenAI }));
+    vi.doMock('../../src/config/env', () => ({
+      env: {
+        AI_PROVIDER: 'openai',
+        DEEPSEEK_API_KEY: undefined,
+        DEEPSEEK_MODEL: 'deepseek-chat',
+        OPENAI_API_KEY: 'openai-key',
+        OPENAI_MODEL: 'gpt-4o-mini'
+      }
+    }));
+
+    const { AIService } = await import('../../src/services/aiService');
+    const service = new AIService();
+    const chunks: string[] = [];
+
+    for await (const chunk of service.streamResponse({
+      subject: 'physics',
+      conversationHistory: [],
+      userInput: 'question'
+    })) {
+      chunks.push(chunk);
+    }
+
+    expect(OpenAI).toHaveBeenCalledWith({
+      apiKey: 'openai-key'
+    });
+    expect(chunks).toEqual(['A', 'B']);
   });
 
-  it('uses deepseek-chat as default model', async () => {
-    process.env.AI_PROVIDER = 'deepseek';
-    process.env.DEEPSEEK_API_KEY = 'test-key';
-    // 不设置 DEEPSEEK_MODEL，应该使用默认值
+  it('throws when no AI credentials are configured and exposes the Socratic prompt template', async () => {
+    const { OpenAI } = createOpenAIMock();
+    vi.doMock('openai', () => ({ default: OpenAI }));
+    vi.doMock('../../src/config/env', () => ({
+      env: {
+        AI_PROVIDER: 'deepseek',
+        DEEPSEEK_API_KEY: undefined,
+        DEEPSEEK_MODEL: 'deepseek-chat',
+        OPENAI_API_KEY: undefined,
+        OPENAI_MODEL: 'gpt-4o-mini'
+      }
+    }));
 
-    const { env } = await import('../../src/config/env');
-    expect(env.DEEPSEEK_MODEL).toBe('deepseek-chat');
+    const { AIService } = await import('../../src/services/aiService');
+
+    expect(() => new AIService()).toThrow('请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY');
+    expect(AIService.prototype.buildSocraticSystemPrompt.call({}, 'history', 'rome')).toContain(
+      '学科：history'
+    );
   });
 });

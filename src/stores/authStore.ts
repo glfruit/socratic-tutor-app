@@ -1,21 +1,32 @@
 import { create } from "zustand";
-import type { User } from "@/types";
+import type { User, UserPreferences } from "@/types";
 
 const TOKEN_KEY = "socratic_token";
+
+const getStorage = () => {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return typeof window.localStorage?.getItem === "function" ? window.localStorage : null;
+  } catch {
+    return null;
+  }
+};
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  login: (payload: { user: User; token: string }) => void;
+  preferences: UserPreferences | null;
+  login: (payload: { user: User; token: string; preferences?: UserPreferences | null }) => void;
   logout: () => void;
+  setPreferences: (preferences: UserPreferences) => void;
 }
 
 const getInitialToken = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-  return null;
+  return getStorage()?.getItem(TOKEN_KEY) ?? null;
 };
 
 const initialToken = getInitialToken();
@@ -24,13 +35,17 @@ export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   token: initialToken,
   isAuthenticated: Boolean(initialToken),
-  login: ({ user, token }) => {
-    localStorage.setItem(TOKEN_KEY, token);
-    set({ user, token, isAuthenticated: true });
+  preferences: null,
+  login: ({ user, token, preferences = null }) => {
+    getStorage()?.setItem(TOKEN_KEY, token);
+    set({ user, token, preferences, isAuthenticated: true });
   },
   logout: () => {
-    localStorage.removeItem(TOKEN_KEY);
-    set({ user: null, token: null, isAuthenticated: false });
+    getStorage()?.removeItem(TOKEN_KEY);
+    set({ user: null, token: null, preferences: null, isAuthenticated: false });
+  },
+  setPreferences: (preferences) => {
+    set({ preferences });
   }
 }));
 

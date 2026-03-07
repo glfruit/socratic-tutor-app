@@ -47,7 +47,7 @@ export function RegisterPage() {
     try {
       const result = await authService.register(form);
       login(result);
-      navigate("/dashboard", { replace: true });
+      navigate("/home", { replace: true });
     } catch {
       setError("注册失败，请稍后重试");
     } finally {

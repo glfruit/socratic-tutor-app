@@ -1,4 +1,16 @@
-import type { ChatMessage, MasteryRecord, ProgressStat, SessionSummary, Subject } from "@/types";
+import type {
+  Chapter,
+  ChatMessage,
+  DocumentDetail,
+  DocumentSummary,
+  HomeData,
+  MasteryRecord,
+  ProgressStat,
+  ReadingSession,
+  SessionSummary,
+  Subject,
+  UserPreferences
+} from "@/types";
 
 export const mockSessions: SessionSummary[] = [
   {
@@ -54,3 +66,123 @@ export const mockMastery: MasteryRecord[] = [
   { concept: "受力分析", level: "UNDERSTANDING", percent: 56 },
   { concept: "逻辑论证", level: "MASTERY", percent: 91 }
 ];
+
+export const mockChapters: Chapter[] = [
+  {
+    id: "c-1",
+    title: "第 1 章 问题的起点",
+    orderIndex: 0,
+    content:
+      "苏格拉底式阅读并不急于寻找答案，而是先校准问题。阅读时先识别作者提出了什么核心问题，再观察论证依赖了哪些前提。"
+  },
+  {
+    id: "c-2",
+    title: "第 2 章 论证与证据",
+    orderIndex: 1,
+    content:
+      "当一个观点看起来可信时，真正值得追问的是：它依赖了什么证据？这些证据是否足够支持结论，是否还存在更强的反例。"
+  },
+  {
+    id: "c-3",
+    title: "第 3 章 迁移与应用",
+    orderIndex: 2,
+    content:
+      "理解不是复述。真正的理解意味着把原文中的概念迁移到新场景中，并解释为什么在新场景下依然成立，或者为什么会失效。"
+  }
+];
+
+export const mockDocuments: DocumentSummary[] = [
+  {
+    id: "doc-book-1",
+    type: "BOOK",
+    title: "批判性思维导论",
+    author: "D. Fisher",
+    description: "一本适合用苏格拉底式提问阅读的入门书。",
+    status: "READY",
+    progress: 42,
+    createdAt: "2026-03-01T09:00:00Z"
+  },
+  {
+    id: "doc-book-2",
+    type: "BOOK",
+    title: "科学革命的结构",
+    author: "Thomas Kuhn",
+    description: "围绕范式转换与科学史进行阅读讨论。",
+    status: "READY",
+    progress: 18,
+    createdAt: "2026-02-28T11:30:00Z"
+  },
+  {
+    id: "doc-material-1",
+    type: "MATERIAL",
+    title: "牛顿定律课堂讲义",
+    description: "配合力学学习对话使用。",
+    status: "PROCESSING",
+    progress: 0,
+    createdAt: "2026-03-06T15:10:00Z"
+  }
+];
+
+export const mockDocumentDetails: Record<string, DocumentDetail> = {
+  "doc-book-1": {
+    ...mockDocuments[0],
+    chapters: mockChapters
+  },
+  "doc-book-2": {
+    ...mockDocuments[1],
+    chapters: mockChapters.map((chapter, index) => ({
+      ...chapter,
+      id: `kuhn-${index + 1}`,
+      title: chapter.title.replace("第", "Kuhn 第"),
+      content: `${chapter.content} 这段内容用于模拟另一本文档的章节载荷。`
+    }))
+  },
+  "doc-material-1": {
+    ...mockDocuments[2],
+    chapters: []
+  }
+};
+
+export const mockReadingSessions: Record<string, ReadingSession> = {
+  "doc-book-1": {
+    id: "read-1",
+    document: { id: "doc-book-1", title: "批判性思维导论" },
+    currentChapter: mockChapters[0],
+    messages: [
+      {
+        id: "read-m-1",
+        role: "assistant",
+        content: "如果作者要你只带走一个判断标准，你觉得会是哪一个？",
+        createdAt: "2026-03-06T09:00:00Z",
+        metadata: { referencedText: "先校准问题", pageNumber: 3 }
+      }
+    ],
+    progress: 42,
+    status: "ACTIVE",
+    createdAt: "2026-03-06T09:00:00Z"
+  }
+};
+
+export const mockHomeData: HomeData = {
+  user: {
+    id: "u-1",
+    email: "learner@example.com",
+    name: "学习者",
+    role: "STUDENT",
+    level: "HIGH_SCHOOL"
+  },
+  stats: {
+    totalStudyMinutes: 320,
+    completedBooks: 3,
+    currentStreak: 5
+  },
+  recent: {
+    learning: mockSessions,
+    reading: mockDocuments.filter((item) => item.type === "BOOK")
+  }
+};
+
+export const mockPreferences: UserPreferences = {
+  defaultLevel: "HIGH_SCHOOL",
+  theme: "system"
+};
