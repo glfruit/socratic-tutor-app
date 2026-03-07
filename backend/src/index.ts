@@ -6,7 +6,6 @@ import { redis } from './config/redis';
 const app = createApp();
 
 const server = app.listen(env.PORT, () => {
-  // eslint-disable-next-line no-console
   console.log(`Server running on :${env.PORT}`);
 });
 
