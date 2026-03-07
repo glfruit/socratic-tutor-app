@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MessageInput } from "./MessageInput";
 
 describe("MessageInput", () => {
-  it("sends message with button", async () => {
+  it("clears the input after sending with the button", async () => {
     const onSend = vi.fn().mockResolvedValue({ ok: true });
     render(<MessageInput onSend={onSend} isStreaming={false} onStop={() => {}} />);
 
@@ -12,6 +12,18 @@ describe("MessageInput", () => {
     await userEvent.click(screen.getByRole("button", { name: "发送" }));
 
     expect(onSend).toHaveBeenCalledWith("你好");
+    await waitFor(() => expect(textarea).toHaveValue(""));
+  });
+
+  it("clears the input after sending with Enter", async () => {
+    const onSend = vi.fn().mockResolvedValue({ ok: true });
+    render(<MessageInput onSend={onSend} isStreaming={false} onStop={() => {}} />);
+
+    const textarea = screen.getByLabelText("消息输入");
+    await userEvent.type(textarea, "按回车发送{enter}");
+
+    expect(onSend).toHaveBeenCalledWith("按回车发送");
+    await waitFor(() => expect(textarea).toHaveValue(""));
   });
 
   it("shows stop when streaming", async () => {

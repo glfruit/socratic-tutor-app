@@ -64,4 +64,22 @@ describe("sessionStore", () => {
     expect(useSessionStore.getState().error).toBe("新会话创建失败，请稍后重试。");
     expect(useSessionStore.getState().messages).toEqual([]);
   });
+
+  it("returns a failed result when sending the message fails", async () => {
+    useSessionStore.setState({
+      currentSessionId: "session-123",
+      messages: [],
+      isStreaming: false,
+      isLoadingSession: false,
+      error: null
+    });
+    vi.mocked(sessionService.sendMessage).mockRejectedValue(new Error("发送失败"));
+
+    const result = await useSessionStore.getState().sendMessage("测试消息");
+
+    expect(result).toEqual({ ok: false, error: "发送失败" });
+    expect(useSessionStore.getState().error).toBe("发送失败");
+    expect(useSessionStore.getState().messages).toEqual([]);
+    expect(useSessionStore.getState().isStreaming).toBe(false);
+  });
 });

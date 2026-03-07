@@ -18,12 +18,16 @@ export function MessageInput({ onSend, isStreaming, isDisabled = false, error = 
     if (!content || isStreaming || isSubmitting || isDisabled) {
       return;
     }
+
     setIsSubmitting(true);
-    const result = await onSend(content);
-    if (result.ok) {
-      setValue("");
+    try {
+      const result = await onSend(content);
+      if (result.ok) {
+        setValue("");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   return (

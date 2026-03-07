@@ -111,7 +111,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       }
 
       set({ isStreaming: false });
-      return { ok: true, sessionId };
+      const result: SendMessageResult = { ok: true, sessionId };
+      return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : "消息发送失败，请检查网络后重试。";
       console.error("[sessionStore] Message send failed", {
@@ -123,7 +124,8 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         isStreaming: false,
         error: message
       });
-      return { ok: false, error: message };
+      const result: SendMessageResult = { ok: false, error: message };
+      return result;
     }
   },
 
