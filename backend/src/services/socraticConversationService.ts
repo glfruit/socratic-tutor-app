@@ -2,15 +2,8 @@ import { Level } from '@prisma/client';
 import OpenAI from 'openai';
 import { env } from '../config/env';
 
-interface ChatClientLike {
-  chat: {
-    completions: {
-      create: (input: Record<string, unknown>) => Promise<AsyncIterable<{
-        choices: Array<{ delta?: { content?: string } }>;
-      }>>;
-    };
-  };
-}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ChatClientLike = any;
 
 interface ConversationOptions {
   client?: ChatClientLike;

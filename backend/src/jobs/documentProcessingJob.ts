@@ -1,7 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Queue, Worker } from 'bullmq';
 import { DocumentStatus } from '@prisma/client';
-import type Redis from 'ioredis';
 import { PrismaLike } from '../config/prisma';
 import { DocumentService } from '../services/documentService';
 import { EmbeddingService } from '../services/embeddingService';
@@ -11,11 +10,14 @@ interface DocumentProcessingPayload {
   documentId: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RedisConnection = any;
+
 export class DocumentProcessingJob {
   private readonly queue: Queue<DocumentProcessingPayload>;
 
   constructor(
-    connection: Redis,
+    connection: RedisConnection,
     private readonly prisma: PrismaLike,
     private readonly documentService: DocumentService,
     private readonly parsingService: ParsingService,
@@ -38,7 +40,7 @@ export class DocumentProcessingJob {
     });
   }
 
-  createWorker(connection: Redis) {
+  createWorker(connection: RedisConnection) {
     return new Worker<DocumentProcessingPayload>(
       'document-processing',
       async (job) => {

@@ -1,7 +1,7 @@
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { DocumentStatus, DocumentType } from '@prisma/client';
+import { DocumentStatus, DocumentType, Prisma } from '@prisma/client';
 import { env } from '../config/env';
 import { PrismaLike } from '../config/prisma';
 import { AppError } from '../utils/appError';
@@ -221,7 +221,7 @@ export class DocumentService {
             content: chunk.content,
             orderIndex: chunk.orderIndex,
             tokenCount: chunk.tokenCount,
-            metadata: chunk.metadata
+            metadata: chunk.metadata ? (chunk.metadata as unknown as Prisma.InputJsonValue) : Prisma.JsonNull
           }))
         });
 
