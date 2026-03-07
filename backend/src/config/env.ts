@@ -14,6 +14,9 @@ const envSchema = z.object({
   REFRESH_TOKEN_TTL: z.string().default('7d'),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().default('gpt-4o-mini'),
+  DEEPSEEK_API_KEY: z.string().optional(),
+  DEEPSEEK_MODEL: z.string().default('deepseek-chat'),
+  AI_PROVIDER: z.enum(['openai', 'deepseek']).default('deepseek'),
   CORS_ORIGIN: z.string().default('http://localhost:3000')
 });
 
