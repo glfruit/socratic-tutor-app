@@ -35,6 +35,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build Project
+        run: npm run build
+        env:
+          VITE_API_URL: https://socratic-tutor-app-production.up.railway.app/api/v1
+      
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
