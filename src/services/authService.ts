@@ -11,19 +11,30 @@ interface RegisterInput extends LoginInput {
   role: UserRole;
 }
 
-interface AuthResult {
+interface Tokens {
+  accessToken: string;
+  refreshToken: string;
+}
+
+interface AuthResponse {
   user: User;
-  token: string;
+  tokens: Tokens;
 }
 
 export const authService = {
-  async login(input: LoginInput): Promise<AuthResult> {
-    const response = await api.post<AuthResult>("/auth/login", input);
-    return response.data;
+  async login(input: LoginInput): Promise<{ user: User; token: string }> {
+    const response = await api.post<AuthResponse>("/auth/login", input);
+    return {
+      user: response.data.user,
+      token: response.data.tokens.accessToken
+    };
   },
 
-  async register(input: RegisterInput): Promise<AuthResult> {
-    const response = await api.post<AuthResult>("/auth/register", input);
-    return response.data;
+  async register(input: RegisterInput): Promise<{ user: User; token: string }> {
+    const response = await api.post<AuthResponse>("/auth/register", input);
+    return {
+      user: response.data.user,
+      token: response.data.tokens.accessToken
+    };
   }
 };
