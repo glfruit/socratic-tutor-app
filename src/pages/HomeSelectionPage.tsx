@@ -5,12 +5,16 @@ import { StatsPanel } from "@/components/home/StatsPanel";
 import { mockHomeData } from "@/services/mockData";
 import { useAuthStore } from "@/stores/authStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
+import { getLearningLevelLabel } from "@/utils/learningLevel";
 import type { HomeData } from "@/types";
 
 export function HomeSelectionPage() {
   const [homeData, setHomeData] = useState<HomeData>(mockHomeData);
   const user = useAuthStore((state) => state.user);
-  const loadPreferences = usePreferencesStore((state) => state.loadPreferences);
+  const { defaultLevel, loadPreferences } = usePreferencesStore((state) => ({
+    defaultLevel: state.defaultLevel,
+    loadPreferences: state.loadPreferences
+  }));
 
   useEffect(() => {
     setHomeData((current) => ({
@@ -49,7 +53,7 @@ export function HomeSelectionPage() {
             <div className="grid gap-3 text-sm leading-6 text-stone-700">
               <div className="flex items-center justify-between">
                 <span>默认水平</span>
-                <span className="font-semibold text-stone-900">高中</span>
+                <span className="font-semibold text-stone-900">{getLearningLevelLabel(defaultLevel)}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span>最近阅读完成度</span>

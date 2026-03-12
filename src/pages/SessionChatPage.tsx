@@ -2,9 +2,16 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MessageInput } from "@/components/dialogue/MessageInput";
 import { MessageList } from "@/components/dialogue/MessageList";
+import { LevelSelector } from "@/components/level/LevelSelector";
 import { useSessionStore } from "@/stores/sessionStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
-import { DEFAULT_LEARNING_LEVEL, getLearningLevelLabel } from "@/utils/learningLevel";
+import {
+  DEFAULT_LEARNING_LEVEL,
+  getLearningLevelLabel,
+  getLearningLevelOption,
+  learningLevelOptions
+} from "@/utils/learningLevel";
+import type { LearningLevel } from "@/types";
 
 const contextMatchesRoute = (
   activeContext: { subject: string | null; level: string | null } | null,
@@ -104,10 +111,22 @@ export function SessionChatPage() {
   }, [clearError, id]);
 
   const levelLabel = getLearningLevelLabel(levelValue);
+  const levelOption = getLearningLevelOption(levelValue);
   const sessionStatus = isLoadingSession ? "正在载入会话" : isStreaming ? "导师正在生成回应" : "可以继续提问";
+  const currentLevel = (
+    learningLevelOptions.find((option) => option.level === levelValue) ?? learningLevelOptions.find((option) => option.level === DEFAULT_LEARNING_LEVEL)!
+  ).level;
+
+  const handleLevelChange = (nextLevel: LearningLevel) => {
+    if (nextLevel === currentLevel) {
+      return;
+    }
+
+    navigate(`/sessions/new?subject=${encodeURIComponent(subject)}&level=${encodeURIComponent(nextLevel)}`);
+  };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <header className="overflow-hidden rounded-[32px] bg-gradient-to-r from-slate-900 via-slate-800 to-primary p-6 text-white shadow-card">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -133,6 +152,36 @@ export function SessionChatPage() {
           </div>
         </div>
       </header>
+
+      <section className="grid gap-4 rounded-[32px] border border-[#ddd4c7] bg-[#fbf8f2] p-5 shadow-[0_18px_40px_rgba(68,80,96,0.08)] lg:grid-cols-[1.2fr_0.8fr]">
+        <LevelSelector
+          value={currentLevel}
+          onChange={handleLevelChange}
+          title="需要调整这场对话的追问层级吗？"
+          description="切换层级会开启新的学习上下文，适合在同一学科下改用更具体或更批判的提问节奏。"
+          showDescriptionCard={false}
+        />
+        <aside className="self-start rounded-[28px] border border-[#ddd3c2] bg-[linear-gradient(180deg,#f8f3ea_0%,#fdfbf7_100%)] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8b7c67]">Current Tone</p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-stone-900">{levelLabel}</h2>
+          <p className="mt-3 text-sm leading-7 text-stone-700">{levelOption.description}</p>
+          <div className="mt-5 border-t border-[#e2dbcf] pt-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#8b7c67]">提问重点</p>
+            <p className="mt-2 text-sm font-medium leading-7 text-[#5f6f82]">{levelOption.focus}</p>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {levelOption.scenarios.map((scenario) => (
+              <span
+                key={scenario}
+                className="rounded-full border border-[#d9d0c1] bg-[#f3ecdf] px-3 py-1 text-xs font-medium text-stone-700"
+              >
+                {scenario}
+              </span>
+            ))}
+          </div>
+        </aside>
+      </section>
+
       <MessageList key={`${routeId}-${routeContextKey}`} messages={visibleMessages} isLoading={isLoadingSession} />
 
       <MessageInput
