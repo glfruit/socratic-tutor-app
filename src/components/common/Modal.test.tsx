@@ -25,4 +25,20 @@ describe("Modal", () => {
     await userEvent.click(screen.getByRole("button", { name: "关闭" }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it("supports backdrop and escape close", async () => {
+    const onClose = vi.fn();
+
+    render(
+      <Modal isOpen onClose={onClose} title="Confirm">
+        body
+      </Modal>
+    );
+
+    await userEvent.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    await userEvent.click(screen.getByRole("dialog").parentElement as HTMLElement);
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
 });

@@ -8,7 +8,7 @@ import { useReadingStore } from "@/stores/useReadingStore";
 
 export function BookReaderPage() {
   const { documentId = "" } = useParams();
-  const { document, session, currentChapter, messages, selectedText, initializeReader, selectChapter, setSelectedText, sendMessage, isStreaming, isLoading, progressState, error } =
+  const { document, session, currentChapter, messages, selectedText, initializeReader, selectChapter, updateChapterCompletion, setSelectedText, sendMessage, isStreaming, isLoading, progressState, error } =
     useReadingStore((state) => ({
       document: state.document,
       session: state.session,
@@ -17,6 +17,7 @@ export function BookReaderPage() {
       selectedText: state.selectedText,
       initializeReader: state.initializeReader,
       selectChapter: state.selectChapter,
+      updateChapterCompletion: state.updateChapterCompletion,
       setSelectedText: state.setSelectedText,
       sendMessage: state.sendMessage,
       isStreaming: state.isStreaming,
@@ -86,9 +87,11 @@ export function BookReaderPage() {
         />
         <ReadingArea
           chapter={currentChapter}
+          totalChapters={document?.chapters.length ?? 0}
           isLoading={isLoading}
           selectedText={selectedText}
           onSelectText={setSelectedText}
+          onReadingProgress={updateChapterCompletion}
           onAskAboutSelection={() =>
             void sendMessage("请围绕这段文字提出一个值得继续追问的问题。", {
               selectedText

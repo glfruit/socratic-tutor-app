@@ -4,18 +4,34 @@ import type { Chapter } from "@/types";
 
 interface ReadingAreaProps {
   chapter: Chapter | null;
+  totalChapters?: number;
   isLoading?: boolean;
   selectedText: string;
   onSelectText: (text: string) => void;
+  onReadingProgress: (progress: number) => void;
   onAskAboutSelection: () => void;
 }
 
-export function ReadingArea({ chapter, isLoading = false, selectedText, onSelectText, onAskAboutSelection }: ReadingAreaProps) {
+export function ReadingArea({
+  chapter,
+  totalChapters = 0,
+  isLoading = false,
+  selectedText,
+  onSelectText,
+  onReadingProgress,
+  onAskAboutSelection
+}: ReadingAreaProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     onSelectText("");
-  }, [chapter?.id, onSelectText]);
+    onReadingProgress(0);
+
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [chapter?.id, onReadingProgress, onSelectText]);
 
   const captureSelection = () => {
     const selection = window.getSelection()?.toString().trim() ?? "";
@@ -24,6 +40,42 @@ export function ReadingArea({ chapter, isLoading = false, selectedText, onSelect
     }
     onSelectText(selection);
   };
+
+  const captureProgress = () => {
+    const node = scrollRef.current;
+    if (!node) {
+      return;
+    }
+
+    const maxScrollTop = node.scrollHeight - node.clientHeight;
+    if (maxScrollTop <= 0) {
+      onReadingProgress(0);
+      return;
+    }
+
+    onReadingProgress((node.scrollTop / maxScrollTop) * 100);
+  };
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const node = scrollRef.current;
+      if (!node) {
+        return;
+      }
+
+      const maxScrollTop = node.scrollHeight - node.clientHeight;
+      if (maxScrollTop <= 0) {
+        onReadingProgress(0);
+        return;
+      }
+
+      onReadingProgress((node.scrollTop / maxScrollTop) * 100);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [chapter?.content, onReadingProgress]);
 
   return (
     <section className="overflow-hidden rounded-[32px] border border-[#d8d2c4] bg-[#fcfaf6] shadow-[0_18px_44px_rgba(44,52,67,0.08)]">
@@ -42,14 +94,18 @@ export function ReadingArea({ chapter, isLoading = false, selectedText, onSelect
               <p className="mt-2 font-semibold text-stone-950">{chapter ? `第 ${chapter.orderIndex + 1} 节` : "--"}</p>
             </div>
             <div className="rounded-[20px] border border-[#e2d8c8] bg-white/80 px-4 py-3">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">操作提示</p>
-              <p className="mt-2 font-semibold text-stone-950">{selectedText ? "已选中段落" : "拖选文本提问"}</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-stone-500">阅读提示</p>
+              <p className="mt-2 font-semibold text-stone-950">{selectedText ? "已选中段落" : totalChapters > 1 ? "滚动内容会自动保存进度" : "拖选文本提问"}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="px-5 py-6 sm:px-7 sm:py-7">
+      <div
+        ref={scrollRef}
+        onScroll={captureProgress}
+        className="px-5 py-6 sm:px-7 sm:py-7 xl:max-h-[calc(100vh-15rem)] xl:overflow-y-auto"
+      >
         <div
           ref={contentRef}
           onMouseUp={captureSelection}

@@ -47,6 +47,8 @@ const applyFilters = (items: DocumentSummary[], filters: DocumentFilters) => {
 
 const DEFAULT_PAGE_SIZE = 6;
 
+const getHasMore = (page: number, pageSize: number, total: number) => page * pageSize < total;
+
 export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   items: [],
   filteredItems: [],
@@ -81,7 +83,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         items: response.items,
         filteredItems,
         visibleItems: filteredItems,
-        hasMore: response.pagination.page * response.pagination.pageSize < response.pagination.total,
+        hasMore: getHasMore(response.pagination.page, response.pagination.pageSize, response.pagination.total),
         total: response.pagination.total,
         isLoading: false,
         isLoadingMore: false
@@ -117,7 +119,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
         items: mergedItems,
         filteredItems,
         visibleItems: filteredItems,
-        hasMore: response.pagination.page * response.pagination.pageSize < response.pagination.total,
+        hasMore: getHasMore(response.pagination.page, response.pagination.pageSize, response.pagination.total),
         total: response.pagination.total,
         isLoadingMore: false
       });
@@ -154,7 +156,7 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
           filteredItems,
           visibleItems: filteredItems,
           total: state.total + 1,
-          hasMore: filteredItems.length < state.total + 1
+          hasMore: getHasMore(state.currentPage, state.pageSize, state.total + 1)
         };
       });
       return document;
@@ -170,13 +172,14 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       set((state) => {
         const items = state.items.filter((item) => item.id !== documentId);
         const filteredItems = applyFilters(items, state.filters);
+        const total = Math.max(0, state.total - 1);
 
         return {
           items,
           filteredItems,
           visibleItems: filteredItems,
-          total: Math.max(0, state.total - 1),
-          hasMore: items.length < state.total - 1 ? true : state.hasMore,
+          total,
+          hasMore: getHasMore(state.currentPage, state.pageSize, total),
           error: null
         };
       });

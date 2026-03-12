@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from "react";
+import { useEffect, useId, type MouseEvent, type PropsWithChildren } from "react";
 
 interface ModalProps {
   isOpen: boolean;
@@ -14,26 +14,54 @@ const sizeClass = {
 } as const;
 
 export function Modal({ isOpen, onClose, title, description, size = "md", children }: PropsWithChildren<ModalProps>) {
+  const titleId = useId();
+  const descriptionId = useId();
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen, onClose]);
+
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#201910]/48 p-4 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#201910]/48 p-4 backdrop-blur-sm"
+      onMouseDown={(event: MouseEvent<HTMLDivElement>) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
-        aria-describedby={description ? "modal-description" : undefined}
+        aria-labelledby={titleId}
+        aria-describedby={description ? descriptionId : undefined}
         className={`w-full ${sizeClass[size]} overflow-hidden rounded-[28px] border border-[#ddd2c1] bg-[#fbf7f1] shadow-[0_30px_90px_rgba(32,25,16,0.18)]`}
       >
         <div className="flex items-start justify-between gap-4 border-b border-[#e7ddcf] px-5 py-5 sm:px-6">
           <div>
-            <h3 id="modal-title" className="text-xl font-semibold tracking-[-0.03em] text-stone-950">
+            <h3 id={titleId} className="text-xl font-semibold tracking-[-0.03em] text-stone-950">
               {title}
             </h3>
             {description ? (
-              <p id="modal-description" className="mt-2 max-w-[44ch] text-sm leading-7 text-stone-600">
+              <p id={descriptionId} className="mt-2 max-w-[44ch] text-sm leading-7 text-stone-600">
                 {description}
               </p>
             ) : null}

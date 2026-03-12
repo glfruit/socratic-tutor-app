@@ -7,6 +7,7 @@ interface ReadingState {
   document: DocumentDetail | null;
   session: ReadingSession | null;
   currentChapter: Chapter | null;
+  chapterCompletion: number;
   selectedText: string;
   messages: ChatMessage[];
   isLoading: boolean;
@@ -15,11 +16,16 @@ interface ReadingState {
   error: string | null;
   initializeReader: (documentId: string) => Promise<void>;
   selectChapter: (chapterId: string) => Promise<void>;
+  updateChapterCompletion: (completion: number) => void;
   setSelectedText: (text: string) => void;
   sendMessage: (content: string, context?: ReadingMessageContext) => Promise<void>;
 }
 
-const getChapterProgress = (chapters: Chapter[], chapterId?: string) => {
+let progressSaveTimer: ReturnType<typeof window.setTimeout> | null = null;
+
+const clampProgress = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
+
+const getChapterProgress = (chapters: Chapter[], chapterId?: string, chapterCompletion = 100) => {
   if (!chapters.length || !chapterId) {
     return 0;
   }
@@ -29,13 +35,54 @@ const getChapterProgress = (chapters: Chapter[], chapterId?: string) => {
     return 0;
   }
 
-  return Math.round(((chapterIndex + 1) / chapters.length) * 100);
+  return clampProgress(((chapterIndex + chapterCompletion / 100) / chapters.length) * 100);
 };
+
+const getCompletionFromProgress = (chapters: Chapter[], chapterId: string | undefined, progress: number) => {
+  if (!chapters.length || !chapterId) {
+    return 0;
+  }
+
+  const chapterIndex = chapters.findIndex((chapter) => chapter.id === chapterId);
+  if (chapterIndex < 0) {
+    return 0;
+  }
+
+  const chapterSpan = 100 / chapters.length;
+  const chapterStart = chapterIndex * chapterSpan;
+  const chapterOffset = clampProgress(progress) - chapterStart;
+
+  return clampProgress((chapterOffset / chapterSpan) * 100);
+};
+
+const scheduleProgressSave = () => {
+  if (progressSaveTimer) {
+    window.clearTimeout(progressSaveTimer);
+  }
+
+  progressSaveTimer = window.setTimeout(async () => {
+    const { session, currentChapter } = getReadingState();
+    if (!session || !currentChapter) {
+      return;
+    }
+
+    try {
+      useReadingStore.setState({ progressState: "saving" });
+      await readingService.updateProgress(session.id, currentChapter.id, session.progress);
+      useReadingStore.setState({ progressState: "saved" });
+    } catch {
+      useReadingStore.setState({ progressState: "error" });
+    }
+  }, 700);
+};
+
+const getReadingState = () => useReadingStore.getState();
 
 export const useReadingStore = create<ReadingState>((set, get) => ({
   document: null,
   session: null,
   currentChapter: null,
+  chapterCompletion: 0,
   selectedText: "",
   messages: [],
   isLoading: false,
@@ -44,15 +91,22 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
   error: null,
 
   async initializeReader(documentId) {
+    if (progressSaveTimer) {
+      window.clearTimeout(progressSaveTimer);
+      progressSaveTimer = null;
+    }
+
     set({ isLoading: true, error: null, progressState: "idle", selectedText: "" });
 
     try {
       const [document, session] = await Promise.all([documentService.getDocument(documentId), readingService.createSession(documentId)]);
+      const chapterCompletion = getCompletionFromProgress(document.chapters, session.currentChapter?.id, session.progress);
 
       set({
         document,
         session,
         currentChapter: session.currentChapter ?? document.chapters[0] ?? null,
+        chapterCompletion,
         messages: session.messages,
         isLoading: false
       });
@@ -61,6 +115,7 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
         document: null,
         session: null,
         currentChapter: null,
+        chapterCompletion: 0,
         messages: [],
         isLoading: false,
         error: "阅读内容加载失败，请稍后重试。"
@@ -71,10 +126,11 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
   async selectChapter(chapterId) {
     const { document, session } = get();
     const currentChapter = document?.chapters.find((chapter) => chapter.id === chapterId) ?? null;
-    const progress = currentChapter ? getChapterProgress(document?.chapters ?? [], currentChapter.id) : session?.progress ?? 0;
+    const progress = currentChapter ? getChapterProgress(document?.chapters ?? [], currentChapter.id, 0) : session?.progress ?? 0;
 
     set((state) => ({
       currentChapter,
+      chapterCompletion: 0,
       selectedText: "",
       progressState: currentChapter ? "saving" : state.progressState,
       session: state.session && currentChapter ? { ...state.session, currentChapter, progress } : state.session
@@ -88,6 +144,23 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
         set({ progressState: "error" });
       }
     }
+  },
+
+  updateChapterCompletion(completion) {
+    const { document, currentChapter, session } = get();
+    if (!document || !currentChapter || !session) {
+      return;
+    }
+
+    const nextCompletion = clampProgress(completion);
+    const progress = getChapterProgress(document.chapters, currentChapter.id, nextCompletion);
+
+    set((state) => ({
+      chapterCompletion: nextCompletion,
+      session: state.session ? { ...state.session, progress } : state.session
+    }));
+
+    scheduleProgressSave();
   },
 
   setSelectedText(text) {
@@ -141,7 +214,10 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
       });
 
       if (currentChapter) {
-        const progress = Math.max(getChapterProgress(document?.chapters ?? [], currentChapter.id), Math.min((session.progress ?? 0) + 5, 100));
+        const progress = Math.max(
+          getChapterProgress(document?.chapters ?? [], currentChapter.id, get().chapterCompletion),
+          Math.min((session.progress ?? 0) + 5, 100)
+        );
 
         set((state) => ({
           progressState: "saving",
