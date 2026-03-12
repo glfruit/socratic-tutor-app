@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from "react-rout
 import { MessageInput } from "@/components/dialogue/MessageInput";
 import { MessageList } from "@/components/dialogue/MessageList";
 import { LevelSelector } from "@/components/level/LevelSelector";
+import { SessionMaterialUpload } from "@/components/session/SessionMaterialUpload";
 import { useSessionStore } from "@/stores/sessionStore";
 import { usePreferencesStore } from "@/stores/usePreferencesStore";
 import {
@@ -32,26 +33,38 @@ export function SessionChatPage() {
   const {
     currentSessionId,
     messages,
+    materials,
     isStreaming,
     isLoadingSession,
+    isLoadingMaterials,
+    isUploadingMaterial,
+    deletingMaterialIds,
     error,
     activeContext,
     loadSession,
     resetSession,
     clearError,
     sendMessage,
+    uploadMaterial,
+    deleteMaterial,
     stopStreaming
   } = useSessionStore((state) => ({
     currentSessionId: state.currentSessionId,
     messages: state.messages,
+    materials: state.materials,
     isStreaming: state.isStreaming,
     isLoadingSession: state.isLoadingSession,
+    isLoadingMaterials: state.isLoadingMaterials,
+    isUploadingMaterial: state.isUploadingMaterial,
+    deletingMaterialIds: state.deletingMaterialIds,
     error: state.error,
     activeContext: state.activeContext,
     loadSession: state.loadSession,
     resetSession: state.resetSession,
     clearError: state.clearError,
     sendMessage: state.sendMessage,
+    uploadMaterial: state.uploadMaterial,
+    deleteMaterial: state.deleteMaterial,
     stopStreaming: state.stopStreaming
   }));
 
@@ -60,6 +73,7 @@ export function SessionChatPage() {
   const routeId = id ?? "new";
   const isFreshRoute = routeId === "new";
   const visibleMessages = isFreshRoute || currentSessionId !== routeId ? [] : messages;
+  const visibleMaterials = isFreshRoute || currentSessionId !== routeId ? [] : materials;
 
   useLayoutEffect(() => {
     const previousRouteKey = routeSessionKeyRef.current;
@@ -181,6 +195,20 @@ export function SessionChatPage() {
           </div>
         </aside>
       </section>
+
+      <SessionMaterialUpload
+        materials={visibleMaterials}
+        isLoading={isLoadingMaterials}
+        isUploading={isUploadingMaterial}
+        deletingMaterialIds={deletingMaterialIds}
+        error={error}
+        onUpload={(file) => {
+          void uploadMaterial(file, { subject, level: levelValue });
+        }}
+        onDelete={(materialId) => {
+          void deleteMaterial(materialId);
+        }}
+      />
 
       <MessageList key={`${routeId}-${routeContextKey}`} messages={visibleMessages} isLoading={isLoadingSession} />
 

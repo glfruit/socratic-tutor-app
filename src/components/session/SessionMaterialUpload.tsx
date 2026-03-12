@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from "react";
+import { useRef, useState, type ChangeEvent } from "react";
 import type { SessionMaterial } from "@/types";
 
 interface SessionMaterialUploadProps {
@@ -53,6 +53,7 @@ export function SessionMaterialUpload({
   onDelete
 }: SessionMaterialUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -61,11 +62,19 @@ export function SessionMaterialUpload({
       return;
     }
 
-    if (!isAcceptedFile(file) || file.size > maxFileSize) {
+    if (!isAcceptedFile(file)) {
+      setValidationError("仅支持 EPUB、PDF、DOCX 或 TXT 文件。");
       event.target.value = "";
       return;
     }
 
+    if (file.size > maxFileSize) {
+      setValidationError("文件大小不能超过 50MB。");
+      event.target.value = "";
+      return;
+    }
+
+    setValidationError(null);
     onUpload(file);
     event.target.value = "";
   };
@@ -110,9 +119,9 @@ export function SessionMaterialUpload({
             <li>上传后会先进入解析状态，稍后可被会话引用。</li>
             <li>资料只挂在当前学习会话，不会替代文档库里的正式书籍。</li>
           </ul>
-          {error ? (
+          {validationError || error ? (
             <p className="mt-4 rounded-[18px] border border-[#d8b0a8] bg-[#f5e6e1] px-4 py-3 text-sm text-[#8d3f32]">
-              {error}
+              {validationError ?? error}
             </p>
           ) : null}
         </div>

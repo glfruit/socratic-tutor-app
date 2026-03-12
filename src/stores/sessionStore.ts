@@ -72,7 +72,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     const requestId = ++latestLoadRequestId;
     const requestedContext = normalizeContext(options);
     console.info("[sessionStore] Loading session", { sessionId, requestId, requestedContext });
-    set({ isLoadingSession: true, error: null });
+    set({ isLoadingSession: true, isLoadingMaterials: true, error: null });
     try {
       if (requestedContext.subject) {
         const sessions = await sessionService.getSessions();
@@ -97,7 +97,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           set({
             currentSessionId: null,
             messages: [],
+            materials: [],
             isLoadingSession: false,
+            isLoadingMaterials: false,
             error: "当前学科与会话不匹配，已开始新的对话。",
             activeContext: requestedContext
           });
@@ -130,7 +132,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
         return false;
       }
 
-      set({ error: "会话加载失败，请稍后重试。", isLoadingSession: false });
+      set({ error: "会话加载失败，请稍后重试。", isLoadingSession: false, isLoadingMaterials: false });
       return false;
     }
   },

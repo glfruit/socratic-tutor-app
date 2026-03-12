@@ -35,8 +35,12 @@ describe("SessionChatPage", () => {
     useSessionStore.setState({
       currentSessionId: null,
       messages: [],
+      materials: [],
       isStreaming: false,
       isLoadingSession: false,
+      isLoadingMaterials: false,
+      isUploadingMaterial: false,
+      deletingMaterialIds: [],
       error: null,
       activeContext: null
     });
@@ -63,14 +67,21 @@ describe("SessionChatPage", () => {
           createdAt: "2026-03-07T08:00:00Z"
         }
       ],
+      materials: [],
       isStreaming: false,
       isLoadingSession: false,
+      isLoadingMaterials: false,
+      isUploadingMaterial: false,
+      deletingMaterialIds: [],
       error: null,
       activeContext: null,
       loadSession: vi.fn(),
+      loadSessionMaterials: vi.fn(),
       resetSession: resetSessionMock,
       clearError: vi.fn(),
       sendMessage: vi.fn(),
+      uploadMaterial: vi.fn(),
+      deleteMaterial: vi.fn(),
       stopStreaming: vi.fn()
     });
   });
@@ -84,7 +95,7 @@ describe("SessionChatPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("高中")).toBeInTheDocument();
+    expect(screen.getAllByText("高中").length).toBeGreaterThan(0);
     expect(screen.queryByText("HIGH_SCHOOL")).not.toBeInTheDocument();
   });
 
