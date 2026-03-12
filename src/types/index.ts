@@ -20,6 +20,17 @@ export interface SessionSummary {
   status?: "ACTIVE" | "PAUSED" | "ARCHIVED";
   preview?: string;
   messageCount?: number;
+  documentIds?: string[];
+}
+
+export interface SessionMaterial {
+  id: string;
+  sessionId: string;
+  filename: string;
+  title: string;
+  status: DocumentStatus;
+  createdAt: string;
+  size?: number;
 }
 
 export interface ChatMessage {

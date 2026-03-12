@@ -1,12 +1,13 @@
 import axios from "axios";
 import { api, buildApiPath } from "@/services/api";
-import { mockSessions, mockSubjects } from "@/services/mockData";
-import type { ChatMessage, SessionSummary, Subject } from "@/types";
+import { mockSessionMaterials, mockSessions, mockSubjects } from "@/services/mockData";
+import type { ChatMessage, SessionMaterial, SessionSummary, Subject } from "@/types";
 
 interface CreateSessionInput {
   subject?: string;
   level?: string;
   title?: string;
+  documentIds?: string[];
 }
 
 interface SendMessageResponse {
@@ -21,6 +22,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
   return fallback;
 };
+
+const cloneMockSessionMaterials = (sessionId: string) =>
+  (mockSessionMaterials[sessionId] ?? []).map((item) => ({ ...item }));
 
 export const sessionService = {
   async getSessions(): Promise<SessionSummary[]> {
@@ -65,6 +69,47 @@ export const sessionService = {
     } catch (error) {
       console.error("[sessionService] Failed to create session", { input, error });
       throw new Error(getErrorMessage(error, "创建会话失败"));
+    }
+  },
+
+  async getSessionMaterials(sessionId: string): Promise<SessionMaterial[]> {
+    try {
+      const response = await api.get<SessionMaterial[]>(buildApiPath("v1", `/sessions/${sessionId}/materials`));
+      return response.data;
+    } catch {
+      return cloneMockSessionMaterials(sessionId);
+    }
+  },
+
+  async uploadMaterial(sessionId: string, file: File): Promise<SessionMaterial> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await api.post<SessionMaterial>(buildApiPath("v1", `/sessions/${sessionId}/upload`), formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      return response.data;
+    } catch {
+      const material: SessionMaterial = {
+        id: crypto.randomUUID(),
+        sessionId,
+        filename: file.name,
+        title: file.name.replace(/\.[^.]+$/, ""),
+        status: "PROCESSING",
+        createdAt: new Date().toISOString(),
+        size: file.size
+      };
+      mockSessionMaterials[sessionId] = [material, ...(mockSessionMaterials[sessionId] ?? [])];
+      return material;
+    }
+  },
+
+  async deleteMaterial(sessionId: string, materialId: string): Promise<void> {
+    try {
+      await api.delete(buildApiPath("v1", `/sessions/${sessionId}/materials/${materialId}`));
+    } catch {
+      mockSessionMaterials[sessionId] = (mockSessionMaterials[sessionId] ?? []).filter((item) => item.id !== materialId);
     }
   },
 

@@ -7,6 +7,7 @@ import type {
   MasteryRecord,
   ProgressStat,
   ReadingSession,
+  SessionMaterial,
   SessionSummary,
   Subject,
   UserPreferences
@@ -79,6 +80,31 @@ export const mockMessages: Record<string, ChatMessage[]> = {
   ],
   "s-2": [
     { id: "m-3", role: "assistant", content: "牛顿第一定律告诉了我们什么？", createdAt: "2026-03-04T08:00:00Z", hints: ["惯性", "受力分析"] }
+  ]
+};
+
+export const mockSessionMaterials: Record<string, SessionMaterial[]> = {
+  "s-1": [
+    {
+      id: "mat-1",
+      sessionId: "s-1",
+      filename: "algebra-cheatsheet.pdf",
+      title: "algebra-cheatsheet",
+      status: "READY",
+      createdAt: "2026-03-05T08:40:00Z",
+      size: 1_572_864
+    }
+  ],
+  "s-2": [
+    {
+      id: "mat-2",
+      sessionId: "s-2",
+      filename: "newton-notes.docx",
+      title: "newton-notes",
+      status: "PROCESSING",
+      createdAt: "2026-03-04T07:45:00Z",
+      size: 824_320
+    }
   ]
 };
 
