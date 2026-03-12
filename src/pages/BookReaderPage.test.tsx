@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { BookReaderPage } from "./BookReaderPage";
 
 describe("BookReaderPage", () => {
-  it("loads reader layout and sends a question", async () => {
+  it("loads reader layout, supports chapter jump, and sends a question", async () => {
     vi.spyOn(global, "fetch").mockRejectedValue(new Error("network disabled"));
 
     render(
@@ -17,6 +17,12 @@ describe("BookReaderPage", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "第 1 章 问题的起点" })).toBeInTheDocument();
+    });
+
+    await userEvent.click(screen.getByRole("button", { name: "下一节" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "第 2 章 论证与证据" })).toBeInTheDocument();
     });
 
     await userEvent.type(screen.getByPlaceholderText(/输入一个问题/i), "这段文字真正的中心论点是什么？");

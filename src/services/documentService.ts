@@ -70,7 +70,7 @@ export const documentService = {
     } catch {
       const filtered = applyFilters(mockDocuments, params);
       const page = params.page ?? 1;
-      const pageSize = params.pageSize ?? filtered.length || 20;
+      const pageSize = params.pageSize ?? (filtered.length || 20);
       const startIndex = (page - 1) * pageSize;
 
       return {

@@ -4,10 +4,12 @@ import type { DocumentSummary } from "@/types";
 interface DocumentListProps {
   documents: DocumentSummary[];
   isLoading?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
   onDelete?: (documentId: string) => void;
 }
 
-export function DocumentList({ documents, isLoading = false, onDelete }: DocumentListProps) {
+export function DocumentList({ documents, isLoading = false, hasMore = false, onLoadMore, onDelete }: DocumentListProps) {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -34,10 +36,24 @@ export function DocumentList({ documents, isLoading = false, onDelete }: Documen
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-      {documents.map((document) => (
-        <DocumentCard key={document.id} document={document} onDelete={onDelete} />
-      ))}
+    <div className="space-y-5">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {documents.map((document) => (
+          <DocumentCard key={document.id} document={document} onDelete={onDelete} />
+        ))}
+      </div>
+
+      {hasMore && onLoadMore ? (
+        <div className="flex justify-center">
+          <button
+            type="button"
+            onClick={onLoadMore}
+            className="inline-flex min-h-12 items-center justify-center rounded-[18px] border border-[#d6cdbf] bg-[#fbf7f1] px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355c7d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f1e6]"
+          >
+            加载更多
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

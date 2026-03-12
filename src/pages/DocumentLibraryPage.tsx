@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Modal } from "@/components/common/Modal";
 import { DocumentList } from "@/components/documents/DocumentList";
 import { useDocumentsStore } from "@/stores/useDocumentsStore";
 
@@ -17,13 +18,30 @@ const statusOptions = [
 ] as const;
 
 export function DocumentLibraryPage() {
-  const { items, filteredItems, filters, isLoading, error, loadDocuments, setFilters, deleteDocument } = useDocumentsStore((state) => ({
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const {
+    items,
+    filteredItems,
+    visibleItems,
+    filters,
+    isLoading,
+    error,
+    hasMore,
+    loadDocuments,
+    loadMore,
+    setFilters,
+    deleteDocument
+  } = useDocumentsStore((state) => ({
     items: state.items,
     filteredItems: state.filteredItems,
+    visibleItems: state.visibleItems,
     filters: state.filters,
     isLoading: state.isLoading,
     error: state.error,
+    hasMore: state.hasMore,
     loadDocuments: state.loadDocuments,
+    loadMore: state.loadMore,
     setFilters: state.setFilters,
     deleteDocument: state.deleteDocument
   }));
@@ -41,6 +59,22 @@ export function DocumentLibraryPage() {
     }),
     [filteredItems.length, items]
   );
+
+  const pendingDeleteDocument = items.find((item) => item.id === pendingDeleteId) ?? null;
+
+  const handleConfirmDelete = async () => {
+    if (!pendingDeleteId) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await deleteDocument(pendingDeleteId);
+      setPendingDeleteId(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -200,10 +234,47 @@ export function DocumentLibraryPage() {
       ) : null}
 
       <DocumentList
-        documents={filteredItems}
+        documents={visibleItems}
         isLoading={isLoading}
-        onDelete={(documentId) => void deleteDocument(documentId)}
+        hasMore={hasMore}
+        onLoadMore={loadMore}
+        onDelete={setPendingDeleteId}
       />
+
+      <Modal
+        isOpen={Boolean(pendingDeleteDocument)}
+        onClose={() => {
+          if (!isDeleting) {
+            setPendingDeleteId(null);
+          }
+        }}
+        title="确认删除文档"
+      >
+        <div className="space-y-5">
+          <div className="rounded-[20px] border border-[#e5dbcc] bg-[#faf5ed] px-4 py-4 text-sm leading-7 text-stone-700">
+            <p className="font-semibold text-stone-950">{pendingDeleteDocument?.title}</p>
+            <p className="mt-2">删除后会从当前文档库移除，阅读入口和相关资料索引也会一并失效。</p>
+          </div>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setPendingDeleteId(null)}
+              disabled={isDeleting}
+              className="inline-flex min-h-11 items-center justify-center rounded-[16px] border border-[#d6cdbf] bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-[#f4eee4] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleConfirmDelete()}
+              disabled={isDeleting}
+              className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#9f4f42] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#874136] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isDeleting ? "删除中..." : "确认删除"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

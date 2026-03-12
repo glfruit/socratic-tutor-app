@@ -2,14 +2,16 @@ import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { AIChatPanel } from "@/components/reader/AIChatPanel";
 import { ChapterSidebar } from "@/components/reader/ChapterSidebar";
+import { ProgressBar } from "@/components/reader/ProgressBar";
 import { ReadingArea } from "@/components/reader/ReadingArea";
 import { useReadingStore } from "@/stores/useReadingStore";
 
 export function BookReaderPage() {
   const { documentId = "" } = useParams();
-  const { document, currentChapter, messages, selectedText, initializeReader, selectChapter, setSelectedText, sendMessage, isStreaming, isLoading } =
+  const { document, session, currentChapter, messages, selectedText, initializeReader, selectChapter, setSelectedText, sendMessage, isStreaming, isLoading } =
     useReadingStore((state) => ({
       document: state.document,
+      session: state.session,
       currentChapter: state.currentChapter,
       messages: state.messages,
       selectedText: state.selectedText,
@@ -60,11 +62,18 @@ export function BookReaderPage() {
         </div>
       </section>
 
+      <ProgressBar
+        chapters={document?.chapters ?? []}
+        activeChapterId={currentChapter?.id}
+        progress={session?.progress ?? document?.progress ?? 0}
+        onSelectChapter={(chapterId) => void selectChapter(chapterId)}
+      />
+
       <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)_360px] xl:items-start">
         <ChapterSidebar
           chapters={document?.chapters ?? []}
           activeChapterId={currentChapter?.id}
-          onSelect={selectChapter}
+          onSelect={(chapterId) => void selectChapter(chapterId)}
         />
         <ReadingArea
           chapter={currentChapter}

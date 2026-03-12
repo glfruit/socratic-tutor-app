@@ -5,12 +5,17 @@ import type { DocumentFilters, DocumentSummary, UploadDocumentInput } from "@/ty
 interface DocumentsState {
   items: DocumentSummary[];
   filteredItems: DocumentSummary[];
+  visibleItems: DocumentSummary[];
   filters: DocumentFilters;
+  currentPage: number;
+  pageSize: number;
+  hasMore: boolean;
   isLoading: boolean;
   isUploading: boolean;
   uploadProgress: number;
   error: string | null;
   loadDocuments: () => Promise<void>;
+  loadMore: () => void;
   setFilters: (filters: Partial<DocumentFilters>) => void;
   uploadDocument: (input: UploadDocumentInput) => Promise<DocumentSummary>;
   deleteDocument: (documentId: string) => Promise<void>;
@@ -38,10 +43,18 @@ const applyFilters = (items: DocumentSummary[], filters: DocumentFilters) => {
   });
 };
 
+const DEFAULT_PAGE_SIZE = 6;
+
+const getVisibleItems = (items: DocumentSummary[], currentPage: number, pageSize: number) => items.slice(0, currentPage * pageSize);
+
 export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   items: [],
   filteredItems: [],
+  visibleItems: [],
   filters: defaultFilters,
+  currentPage: 1,
+  pageSize: DEFAULT_PAGE_SIZE,
+  hasMore: false,
   isLoading: false,
   isUploading: false,
   uploadProgress: 0,
@@ -52,9 +65,15 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
 
     try {
       const items = await documentService.getDocuments();
+      const filteredItems = applyFilters(items, get().filters);
+      const pageSize = get().pageSize;
+
       set((state) => ({
+        currentPage: 1,
         items,
-        filteredItems: applyFilters(items, state.filters),
+        filteredItems,
+        visibleItems: getVisibleItems(filteredItems, 1, pageSize),
+        hasMore: filteredItems.length > state.pageSize,
         isLoading: false
       }));
     } catch {
@@ -62,13 +81,35 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
     }
   },
 
+  loadMore() {
+    set((state) => {
+      if (!state.hasMore) {
+        return {};
+      }
+
+      const currentPage = state.currentPage + 1;
+      const visibleItems = getVisibleItems(state.filteredItems, currentPage, state.pageSize);
+
+      return {
+        currentPage,
+        visibleItems,
+        hasMore: visibleItems.length < state.filteredItems.length
+      };
+    });
+  },
+
   setFilters(filters) {
     set((state) => {
       const nextFilters = { ...state.filters, ...filters };
+      const filteredItems = applyFilters(state.items, nextFilters);
+      const currentPage = 1;
 
       return {
         filters: nextFilters,
-        filteredItems: applyFilters(state.items, nextFilters)
+        filteredItems,
+        visibleItems: getVisibleItems(filteredItems, currentPage, state.pageSize),
+        currentPage,
+        hasMore: filteredItems.length > state.pageSize
       };
     });
   },
@@ -80,12 +121,16 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
       const document = await documentService.uploadDocument(input);
       set((state) => {
         const items = [document, ...state.items];
+        const filteredItems = applyFilters(items, state.filters);
+        const visibleItems = getVisibleItems(filteredItems, state.currentPage, state.pageSize);
 
         return {
           isUploading: false,
           uploadProgress: 100,
           items,
-          filteredItems: applyFilters(items, state.filters)
+          filteredItems,
+          visibleItems,
+          hasMore: visibleItems.length < filteredItems.length
         };
       });
       return document;
@@ -96,14 +141,27 @@ export const useDocumentsStore = create<DocumentsState>((set, get) => ({
   },
 
   async deleteDocument(documentId) {
-    await documentService.deleteDocument(documentId);
-    set((state) => {
-      const items = state.items.filter((item) => item.id !== documentId);
+    try {
+      await documentService.deleteDocument(documentId);
+      set((state) => {
+        const items = state.items.filter((item) => item.id !== documentId);
+        const filteredItems = applyFilters(items, state.filters);
+        const maxPage = Math.max(1, Math.ceil(filteredItems.length / state.pageSize));
+        const currentPage = Math.min(state.currentPage, maxPage);
+        const visibleItems = getVisibleItems(filteredItems, currentPage, state.pageSize);
 
-      return {
-        items,
-        filteredItems: applyFilters(items, state.filters)
-      };
-    });
+        return {
+          items,
+          filteredItems,
+          visibleItems,
+          currentPage,
+          hasMore: visibleItems.length < filteredItems.length,
+          error: null
+        };
+      });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : "删除文档失败，请稍后重试。" });
+      throw error;
+    }
   }
 }));

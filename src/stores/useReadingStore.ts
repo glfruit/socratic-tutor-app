@@ -12,10 +12,23 @@ interface ReadingState {
   isLoading: boolean;
   isStreaming: boolean;
   initializeReader: (documentId: string) => Promise<void>;
-  selectChapter: (chapterId: string) => void;
+  selectChapter: (chapterId: string) => Promise<void>;
   setSelectedText: (text: string) => void;
   sendMessage: (content: string, context?: ReadingMessageContext) => Promise<void>;
 }
+
+const getChapterProgress = (chapters: Chapter[], chapterId?: string) => {
+  if (!chapters.length || !chapterId) {
+    return 0;
+  }
+
+  const chapterIndex = chapters.findIndex((chapter) => chapter.id === chapterId);
+  if (chapterIndex < 0) {
+    return 0;
+  }
+
+  return Math.round(((chapterIndex + 1) / chapters.length) * 100);
+};
 
 export const useReadingStore = create<ReadingState>((set, get) => ({
   document: null,
@@ -42,10 +55,24 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
     });
   },
 
-  selectChapter(chapterId) {
-    const document = get().document;
+  async selectChapter(chapterId) {
+    const { document, session } = get();
     const currentChapter = document?.chapters.find((chapter) => chapter.id === chapterId) ?? null;
-    set({ currentChapter, selectedText: "" });
+    const progress = currentChapter ? getChapterProgress(document?.chapters ?? [], currentChapter.id) : session?.progress ?? 0;
+
+    set((state) => ({
+      currentChapter,
+      selectedText: "",
+      session: state.session && currentChapter ? { ...state.session, currentChapter, progress } : state.session
+    }));
+
+    if (session && currentChapter) {
+      try {
+        await readingService.updateProgress(session.id, currentChapter.id, progress);
+      } catch {
+        // Keep local navigation responsive even if progress sync fails.
+      }
+    }
   },
 
   setSelectedText(text) {
@@ -53,7 +80,7 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
   },
 
   async sendMessage(content, context) {
-    const { session, messages, currentChapter, selectedText } = get();
+    const { session, messages, currentChapter, selectedText, document } = get();
     if (!session || !content.trim()) {
       return;
     }
@@ -97,7 +124,13 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
     });
 
     if (currentChapter) {
-      void readingService.updateProgress(session.id, currentChapter.id, Math.min((session.progress ?? 0) + 5, 100));
+      const progress = Math.max(getChapterProgress(document?.chapters ?? [], currentChapter.id), Math.min((session.progress ?? 0) + 5, 100));
+
+      set((state) => ({
+        session: state.session ? { ...state.session, progress, currentChapter } : state.session
+      }));
+
+      void readingService.updateProgress(session.id, currentChapter.id, progress);
     }
   }
 }));
