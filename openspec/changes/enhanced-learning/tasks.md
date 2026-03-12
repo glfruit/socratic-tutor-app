@@ -2,46 +2,46 @@
 
 ## 后端任务 (Backend)
 
-### 数据库与模型
-- [ ] 1.1 安装 pgvector 扩展
-- [ ] 1.2 更新 schema.prisma 添加 Document/Chapter/DocumentChunk 模型
-- [ ] 1.3 更新 schema.prisma 添加 BookReadingSession/BookMessage 模型
-- [ ] 1.4 更新 schema.prisma 添加 UserPreference 模型
-- [ ] 1.5 运行数据库迁移
+### 数据库与模型 ✅ 完成
+- [x] 1.1 安装 pgvector 扩展
+- [x] 1.2 更新 schema.prisma 添加 Document/Chapter/DocumentChunk 模型
+- [x] 1.3 更新 schema.prisma 添加 BookReadingSession/BookMessage 模型
+- [x] 1.4 更新 schema.prisma 添加 UserPreference 模型
+- [x] 1.5 运行数据库迁移
 
-### 文件上传
-- [ ] 2.1 安装 multer 依赖
-- [ ] 2.2 创建文件上传中间件 (支持 EPUB/PDF/DOCX/TXT)
-- [ ] 2.3 创建文件存储服务 (本地/云存储)
-- [ ] 2.4 实现 POST /documents 接口
-- [ ] 2.5 实现文件类型验证
-- [ ] 2.6 实现文件大小限制 (50MB)
+### 文件上传 ✅ 完成
+- [x] 2.1 安装 multer 依赖
+- [x] 2.2 创建文件上传中间件 (支持 EPUB/PDF/DOCX/TXT)
+- [x] 2.3 创建文件存储服务 (本地/云存储)
+- [x] 2.4 实现 POST /documents 接口
+- [x] 2.5 实现文件类型验证
+- [x] 2.6 实现文件大小限制 (50MB)
 
-### 文档解析
-- [ ] 3.1 安装 pdf-parse 依赖
-- [ ] 3.2 安装 epub2 依赖
-- [ ] 3.3 安装 mammoth 依赖 (DOCX)
-- [ ] 3.4 创建 PDF 解析服务
-- [ ] 3.5 创建 EPUB 解析服务 (提取目录和内容)
-- [ ] 3.6 创建 DOCX/TXT 解析服务
-- [ ] 3.7 创建文本分块服务 (chunking)
+### 文档解析 ✅ 完成
+- [x] 3.1 安装 pdf-parse 依赖
+- [x] 3.2 安装 epub2 依赖
+- [x] 3.3 安装 mammoth 依赖 (DOCX)
+- [x] 3.4 创建 PDF 解析服务
+- [x] 3.5 创建 EPUB 解析服务 (提取目录和内容)
+- [x] 3.6 创建 DOCX/TXT 解析服务
+- [x] 3.7 创建文本分块服务 (chunking)
 - [ ] 3.8 实现后台解析队列 (bullmq)
 
-### Embedding 与向量检索
-- [ ] 4.1 安装 pgvector prisma 扩展
-- [ ] 4.2 创建 Embedding 服务 (DeepSeek/OpenAI)
-- [ ] 4.3 实现文本批量 Embedding 生成
-- [ ] 4.4 实现向量存储到 PostgreSQL
-- [ ] 4.5 实现语义搜索接口 POST /documents/:id/search
-- [ ] 4.6 实现相似度阈值过滤
+### Embedding 与向量检索 ✅ 完成
+- [x] 4.1 安装 pgvector prisma 扩展
+- [x] 4.2 创建 Embedding 服务 (DeepSeek/OpenAI)
+- [x] 4.3 实现文本批量 Embedding 生成
+- [x] 4.4 实现向量存储到 PostgreSQL
+- [x] 4.5 实现语义搜索接口 POST /documents/:id/search
+- [x] 4.6 实现相似度阈值过滤
 
-### 阅读会话 API
-- [ ] 5.1 创建 BookReadingSession 控制器
-- [ ] 5.2 实现 POST /reading-sessions 接口
-- [ ] 5.3 实现 GET /reading-sessions/:id 接口
-- [ ] 5.4 实现 POST /reading-sessions/:id/messages 接口
-- [ ] 5.5 实现 SSE 流式响应
-- [ ] 5.6 实现进度更新 PATCH /reading-sessions/:id/progress
+### 阅读会话 API ✅ 完成
+- [x] 5.1 创建 BookReadingSession 控制器
+- [x] 5.2 实现 POST /reading-sessions 接口
+- [x] 5.3 实现 GET /reading-sessions/:id 接口
+- [x] 5.4 实现 POST /reading-sessions/:id/messages 接口
+- [x] 5.5 实现 SSE 流式响应
+- [x] 5.6 实现进度更新 PATCH /reading-sessions/:id/progress
 - [ ] 5.7 创建苏格拉底式对话 Prompt 模板
 
 ### 用户偏好 API
@@ -56,19 +56,19 @@
 - [ ] 7.3 修改 AI 服务支持水平选择
 - [ ] 7.4 实现基于水平的 Prompt 调整
 
-### 测试
-- [ ] 8.1 单元测试：文件上传
+### 测试 🟨 部分完成
+- [x] 8.1 单元测试：文件上传 (documentService.test.ts)
 - [ ] 8.2 单元测试：文档解析
 - [ ] 8.3 单元测试：Embedding 生成
 - [ ] 8.4 集成测试：完整阅读流程
 - [ ] 8.5 E2E 测试：文件上传 → 解析 → 对话
 
-### Sprint 2 / 2.5 后端重构
-- [ ] 9.1 拆分 `src/app.ts` 中的认证路由到独立模块 (`routes/auth.ts`)
-- [ ] 9.2 拆分学习路由到独立模块 (`routes/learning.ts`)
-- [ ] 9.3 拆分阅读路由到独立模块 (`routes/reading.ts`)
-- [ ] 9.4 抽离共享中间件与校验逻辑（认证、requestId、zod schema 组织）
-- [ ] 9.5 重构路由注册层，保留统一 `/api/v2` 挂载入口
+### Sprint 2 / 2.5 后端重构 🟨 进行中
+- [x] 9.1 拆分 `src/app.ts` 中的认证路由到独立模块 (`routes/auth.ts`)
+- [x] 9.2 拆分学习路由到独立模块 (`routes/learning.ts`)
+- [x] 9.3 拆分阅读路由到独立模块 (`routes/reading.ts`)
+- [x] 9.4 抽离共享中间件与校验逻辑（认证、requestId、zod schema 组织）
+- [x] 9.5 重构路由注册层，保留统一 `/api/v2` 挂载入口
 - [ ] 9.6 为拆分后的路由补齐回归测试，确保行为与现状一致
 - [ ] 9.7 验证 `app.ts` 仅保留应用装配、全局中间件、错误处理与路由挂载职责
 
@@ -76,14 +76,14 @@
 
 ## 前端任务 (Frontend)
 
-### 主入口重构
-- [ ] 1.1 创建 HomeSelection 页面
-- [ ] 1.2 创建 ModeCard 组件 (学习/阅读)
-- [ ] 1.3 创建用户统计面板
-- [ ] 1.4 创建最近活动快捷入口
+### 主入口重构 🟨 进行中
+- [x] 1.1 创建 HomeSelection 页面
+- [x] 1.2 创建 ModeCard 组件 (学习/阅读)
+- [x] 1.3 创建用户统计面板
+- [x] 1.4 创建最近活动快捷入口
 - [ ] 1.5 修改路由配置，登录后跳转到 HomeSelection
 
-### 文档上传
+### 文档上传 🟨 进行中
 - [ ] 2.1 创建 FileUpload 组件 (拖拽上传)
 - [ ] 2.2 创建 UploadProgress 组件
 - [ ] 2.3 创建 DocumentForm 组件 (元数据编辑)
@@ -140,12 +140,12 @@
 - [ ] 9.3 集成测试：上传 → 阅读流程
 - [ ] 9.4 E2E 测试：完整用户场景
 
-### Sprint 2 / 2.5 前端定向重构（Impeccable）
-- [ ] 10.1 使用 `impeccable-frontend-design` 为首页双入口页建立新的视觉方向与信息层级（`src/app/page.tsx`）
+### Sprint 2 / 2.5 前端定向重构（Impeccable）🟨 进行中
+- [x] 10.1 使用 `impeccable-frontend-design` 为首页双入口页建立新的视觉方向与信息层级（`src/app/page.tsx`）
 - [ ] 10.2 清理用户界面中的工程文案与任务编号泄露（如 Sprint/FIX 标签）
 - [ ] 10.3 重构阅读会话主界面，使阅读内容成为主角并弱化通用 AI chat 工作台感（`src/app/reading/session/[id]/page.tsx`）
 - [ ] 10.4 统一阅读器核心组件视觉语言与交互层级（`Sidebar` / `ChapterContent` / `ReadingChat` / `StrategySelector`）
-- [ ] 10.5 重构学习入口链路视觉层级（`subjects` / `assessment` / `learning session`），强化“学习旅程”而非通用问卷/聊天页感
+- [ ] 10.5 重构学习入口链路视觉层级（`subjects` / `assessment` / `learning session`），强化"学习旅程"而非通用问卷/聊天页感
 - [ ] 10.6 在不改变核心业务行为的前提下，建立更明确的页面级设计 token / typography / spacing 规则
 - [ ] 10.7 为关键页面补充视觉回归检查与必要测试，确保重构不破坏现有流程
 
