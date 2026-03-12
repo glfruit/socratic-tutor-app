@@ -83,13 +83,13 @@
 - [x] 1.4 创建最近活动快捷入口
 - [ ] 1.5 修改路由配置，登录后跳转到 HomeSelection
 
-### 文档上传 🟨 进行中
-- [ ] 2.1 创建 FileUpload 组件 (拖拽上传)
-- [ ] 2.2 创建 UploadProgress 组件
-- [ ] 2.3 创建 DocumentForm 组件 (元数据编辑)
-- [ ] 2.4 创建 UploadPage 页面
-- [ ] 2.5 实现文件类型图标
-- [ ] 2.6 实现上传状态管理
+### 文档上传 🟢 完成
+- [x] 2.1 创建 FileUpload 组件 (拖拽上传)
+- [x] 2.2 创建 UploadProgress 组件
+- [x] 2.3 创建 DocumentForm 组件 (元数据编辑)
+- [x] 2.4 创建 UploadPage 页面
+- [x] 2.5 实现文件类型图标
+- [x] 2.6 实现上传状态管理
 
 ### 文档列表
 - [ ] 3.1 创建 DocumentList 页面
