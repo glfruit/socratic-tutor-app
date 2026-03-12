@@ -1,17 +1,32 @@
-import { api, buildApiPath, buildApiUrl } from "@/services/api";
+import axios from "axios";
+import { api, buildApiPath, buildApiUrl, getApiErrorMessage } from "@/services/api";
 import { mockReadingSessions } from "@/services/mockData";
 import type { ReadingMessageContext, ReadingSession } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+interface CreateReadingSessionInput {
+  documentId: string;
+  chapterId?: string;
+}
+
+interface SendReadingMessageInput {
+  content: string;
+  context?: ReadingMessageContext;
+}
+
 export const readingService = {
   async createSession(documentId: string, chapterId?: string): Promise<ReadingSession> {
+    return this.createReadingSession({ documentId, chapterId });
+  },
+
+  async createReadingSession(input: CreateReadingSessionInput): Promise<ReadingSession> {
     try {
-      const response = await api.post<ReadingSession>(buildApiPath("v2", "/reading-sessions"), { documentId, chapterId });
+      const response = await api.post<ReadingSession>(buildApiPath("v2", "/reading-sessions"), input);
       return response.data;
     } catch {
-      const session = mockReadingSessions[documentId];
+      const session = mockReadingSessions[input.documentId];
       return session ?? Object.values(mockReadingSessions)[0];
     }
   },
@@ -25,6 +40,34 @@ export const readingService = {
     }
   },
 
+  async sendMessage(sessionId: string, input: SendReadingMessageInput): Promise<Response> {
+    const token = useAuthStore.getState().token;
+    const response = await fetch(buildApiUrl("v2", `/reading-sessions/${sessionId}/messages`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "text/event-stream",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      body: JSON.stringify(input)
+    });
+
+    if (!response.ok) {
+      let message = "阅读对话发送失败";
+
+      try {
+        const payload = (await response.json()) as { message?: string };
+        message = payload.message ?? message;
+      } catch {
+        message = response.statusText || message;
+      }
+
+      throw new Error(message);
+    }
+
+    return response;
+  },
+
   async streamMessage(
     sessionId: string,
     content: string,
@@ -32,15 +75,7 @@ export const readingService = {
     onChunk?: (chunk: string) => void
   ): Promise<{ messageId: string; content: string }> {
     try {
-      const token = useAuthStore.getState().token;
-      const response = await fetch(buildApiUrl("v2", `/reading-sessions/${sessionId}/messages`), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({ content, context })
-      });
+      const response = await this.sendMessage(sessionId, { content, context });
 
       if (!response.body) {
         throw new Error("No stream body");
@@ -81,7 +116,11 @@ export const readingService = {
       }
 
       return { messageId: crypto.randomUUID(), content: fullText };
-    } catch {
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(getApiErrorMessage(error, "阅读对话发送失败"));
+      }
+
       const fallback = context?.selectedText
         ? `你选择了“${context.selectedText.slice(0, 24)}”。作者为什么要这样表述，这个说法依赖了什么前提？`
         : `先不要急着回答。围绕“${content.slice(0, 18)}”，你认为文本真正想让你分辨的是什么？`;
@@ -100,8 +139,11 @@ export const readingService = {
   async updateProgress(sessionId: string, chapterId: string, progress: number): Promise<void> {
     try {
       await api.patch(buildApiPath("v2", `/reading-sessions/${sessionId}/progress`), { chapterId, progress });
-    } catch {
-      return;
+    } catch (error) {
+      const session = Object.values(mockReadingSessions).find((item) => item.id === sessionId);
+      if (!session) {
+        throw new Error(getApiErrorMessage(error, "阅读进度更新失败"));
+      }
     }
   }
 };

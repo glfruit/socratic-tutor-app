@@ -1,6 +1,43 @@
-import { api, buildApiPath } from "@/services/api";
+import { api, buildApiPath, getApiErrorMessage } from "@/services/api";
 import { mockDocumentDetails, mockDocuments } from "@/services/mockData";
 import type { DocumentDetail, DocumentFilters, DocumentSummary, UploadDocumentInput } from "@/types";
+
+interface DocumentListParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  type?: DocumentFilters["type"];
+  status?: DocumentFilters["status"];
+}
+
+interface DocumentListResponse {
+  items: DocumentSummary[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
+}
+
+interface DocumentSearchInput {
+  query: string;
+  topK?: number;
+  chapterId?: string;
+}
+
+interface DocumentSearchResult {
+  content: string;
+  chapterId: string;
+  chapterTitle: string;
+  score: number;
+  metadata?: {
+    pageNumber?: number;
+  };
+}
+
+interface DocumentSearchResponse {
+  results: DocumentSearchResult[];
+}
 
 const applyFilters = (items: DocumentSummary[], filters?: Partial<DocumentFilters>) => {
   const search = filters?.search?.trim().toLowerCase() ?? "";
@@ -18,19 +55,38 @@ const applyFilters = (items: DocumentSummary[], filters?: Partial<DocumentFilter
 };
 
 export const documentService = {
-  async getDocuments(filters?: Partial<DocumentFilters>): Promise<DocumentSummary[]> {
+  async getDocumentsPage(params: DocumentListParams = {}): Promise<DocumentListResponse> {
     try {
-      const response = await api.get<{ items: DocumentSummary[] }>(buildApiPath("v2", "/documents"), {
+      const response = await api.get<DocumentListResponse>(buildApiPath("v2", "/documents"), {
         params: {
-          search: filters?.search || undefined,
-          type: filters?.type === "ALL" ? undefined : filters?.type,
-          status: filters?.status === "ALL" ? undefined : filters?.status
+          page: params.page,
+          pageSize: params.pageSize,
+          search: params.search || undefined,
+          type: params.type === "ALL" ? undefined : params.type,
+          status: params.status === "ALL" ? undefined : params.status
         }
       });
-      return response.data.items;
+      return response.data;
     } catch {
-      return applyFilters(mockDocuments, filters);
+      const filtered = applyFilters(mockDocuments, params);
+      const page = params.page ?? 1;
+      const pageSize = params.pageSize ?? filtered.length || 20;
+      const startIndex = (page - 1) * pageSize;
+
+      return {
+        items: filtered.slice(startIndex, startIndex + pageSize),
+        pagination: {
+          page,
+          pageSize,
+          total: filtered.length
+        }
+      };
     }
+  },
+
+  async getDocuments(filters?: Partial<DocumentFilters>): Promise<DocumentSummary[]> {
+    const response = await this.getDocumentsPage(filters);
+    return response.items;
   },
 
   async getDocument(documentId: string): Promise<DocumentDetail> {
@@ -39,6 +95,28 @@ export const documentService = {
       return response.data;
     } catch {
       return mockDocumentDetails[documentId] ?? { ...mockDocuments[0], id: documentId, chapters: [] };
+    }
+  },
+
+  async searchDocument(documentId: string, input: DocumentSearchInput): Promise<DocumentSearchResult[]> {
+    try {
+      const response = await api.post<DocumentSearchResponse>(buildApiPath("v2", `/documents/${documentId}/search`), input);
+      return response.data.results;
+    } catch {
+      const document = mockDocumentDetails[documentId] ?? mockDocumentDetails[mockDocuments[0].id];
+      const query = input.query.trim().toLowerCase();
+
+      return document.chapters
+        .filter((chapter) => (input.chapterId ? chapter.id === input.chapterId : true))
+        .map((chapter) => ({
+          content: chapter.content ?? "",
+          chapterId: chapter.id,
+          chapterTitle: chapter.title,
+          score: query && chapter.content?.toLowerCase().includes(query) ? 0.95 : 0.6,
+          metadata: undefined
+        }))
+        .sort((left, right) => right.score - left.score)
+        .slice(0, input.topK ?? 5);
     }
   },
 
@@ -74,8 +152,11 @@ export const documentService = {
   async deleteDocument(documentId: string): Promise<void> {
     try {
       await api.delete(buildApiPath("v2", `/documents/${documentId}`));
-    } catch {
-      return;
+    } catch (error) {
+      const existsInMock = Boolean(mockDocumentDetails[documentId] || mockDocuments.find((item) => item.id === documentId));
+      if (!existsInMock) {
+        throw new Error(getApiErrorMessage(error, "删除文档失败"));
+      }
     }
   }
 };
