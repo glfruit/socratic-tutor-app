@@ -116,17 +116,17 @@
 - [x] 5.3 在学习流程中集成水平选择
 - [ ] 5.4 创建设置页面修改默认水平
 
-### 资料上传 🟨 部分完成
+### 资料上传 🟢 完成
 - [x] 6.1 创建 SessionMaterialUpload 组件
-- [ ] 6.2 在学习会话界面添加上传按钮
-- [ ] 6.3 显示已上传资料列表
+- [x] 6.2 在学习会话界面添加上传按钮
+- [x] 6.3 显示已上传资料列表
 - [ ] 6.4 实现资料删除功能
 
-### 状态管理
-- [ ] 7.1 创建 useDocumentsStore (Zustand)
-- [ ] 7.2 创建 useReadingStore
-- [ ] 7.3 创建 usePreferencesStore
-- [ ] 7.4 更新 useAuthStore 添加偏好信息
+### 状态管理 🟢 完成
+- [x] 7.1 创建 useDocumentsStore (Zustand)
+- [x] 7.2 创建 useReadingStore
+- [x] 7.3 创建 usePreferencesStore
+- [x] 7.4 更新 useAuthStore 添加偏好信息
 
 ### API 服务
 - [ ] 8.1 更新 api.ts 添加新接口
