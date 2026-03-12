@@ -11,8 +11,6 @@ interface LevelSelectorProps {
   showDescriptionCard?: boolean;
 }
 
-export const levelOptions = learningLevelOptions;
-
 export function LevelSelector({
   value,
   onChange,
@@ -27,7 +25,7 @@ export function LevelSelector({
         <p className="mt-2 max-w-[56ch] text-sm leading-7 text-stone-700">{description}</p>
       </div>
       <div role="radiogroup" aria-label={title} className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        {levelOptions.map((item) => (
+        {learningLevelOptions.map((item) => (
           <LevelCard
             key={item.level}
             level={item.level}

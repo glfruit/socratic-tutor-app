@@ -25,6 +25,8 @@ declare module "katex" {
 }
 
 declare module "@tiptap/react" {
+  import type { JSX } from "react";
+
   export interface JSONContent {
     type?: string;
     text?: string;

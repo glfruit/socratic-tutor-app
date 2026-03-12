@@ -22,24 +22,26 @@ export function DocumentLibraryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const {
     items,
-    filteredItems,
     visibleItems,
     filters,
     isLoading,
+    isLoadingMore,
     error,
     hasMore,
+    total,
     loadDocuments,
     loadMore,
     setFilters,
     deleteDocument
   } = useDocumentsStore((state) => ({
     items: state.items,
-    filteredItems: state.filteredItems,
     visibleItems: state.visibleItems,
     filters: state.filters,
     isLoading: state.isLoading,
+    isLoadingMore: state.isLoadingMore,
     error: state.error,
     hasMore: state.hasMore,
+    total: state.total,
     loadDocuments: state.loadDocuments,
     loadMore: state.loadMore,
     setFilters: state.setFilters,
@@ -52,12 +54,12 @@ export function DocumentLibraryPage() {
 
   const counts = useMemo(
     () => ({
-      total: items.length,
-      visible: filteredItems.length,
+      total,
+      visible: visibleItems.length,
       ready: items.filter((item) => item.status === "READY").length,
       processing: items.filter((item) => item.status === "PROCESSING").length
     }),
-    [filteredItems.length, items]
+    [items, total, visibleItems.length]
   );
 
   const pendingDeleteDocument = items.find((item) => item.id === pendingDeleteId) ?? null;
@@ -96,7 +98,7 @@ export function DocumentLibraryPage() {
             <div className="flex items-center justify-between border-b border-[#d8d2c4] pb-3">
               <span className="text-xs font-semibold uppercase tracking-[0.28em] text-[#7b6e59]">Overview</span>
               <span className="text-sm font-medium text-stone-700">
-                {counts.visible} / {counts.total} 可见
+                已加载 {counts.visible} / {counts.total}
               </span>
             </div>
             <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
@@ -109,17 +111,17 @@ export function DocumentLibraryPage() {
               </div>
               <div className="flex items-end justify-between rounded-[20px] border border-white/70 bg-white/78 px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">可阅读</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">已加载可阅读</p>
                   <p className="mt-2 text-2xl font-semibold text-stone-950">{counts.ready}</p>
                 </div>
-                <span className="text-sm text-stone-600">已完成解析</span>
+                <span className="text-sm text-stone-600">当前页内统计</span>
               </div>
               <div className="flex items-end justify-between rounded-[20px] border border-white/70 bg-white/78 px-4 py-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">处理中</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-stone-500">已加载处理中</p>
                   <p className="mt-2 text-2xl font-semibold text-stone-950">{counts.processing}</p>
                 </div>
-                <span className="text-sm text-stone-600">等待就绪</span>
+                <span className="text-sm text-stone-600">当前页内统计</span>
               </div>
             </div>
           </div>
@@ -236,8 +238,12 @@ export function DocumentLibraryPage() {
       <DocumentList
         documents={visibleItems}
         isLoading={isLoading}
+        isLoadingMore={isLoadingMore}
         hasMore={hasMore}
-        onLoadMore={loadMore}
+        total={total}
+        onLoadMore={() => {
+          void loadMore();
+        }}
         onDelete={setPendingDeleteId}
       />
 
@@ -249,12 +255,14 @@ export function DocumentLibraryPage() {
           }
         }}
         title="确认删除文档"
+        description="这个操作会移除文档文件、章节内容、阅读会话与相关索引。删除后无法恢复。"
       >
         <div className="space-y-5">
-          <div className="rounded-[20px] border border-[#e5dbcc] bg-[#faf5ed] px-4 py-4 text-sm leading-7 text-stone-700">
+          <div className="rounded-[22px] border border-[#ebc9c1] bg-[#fbefec] px-4 py-4 text-sm leading-7 text-stone-700">
             <p className="font-semibold text-stone-950">{pendingDeleteDocument?.title}</p>
-            <p className="mt-2">删除后会从当前文档库移除，阅读入口和相关资料索引也会一并失效。</p>
+            <p className="mt-2">删除后会从当前文档库移除，阅读入口、章节索引和历史阅读轨迹都会一并清空。</p>
           </div>
+          <p className="text-sm leading-7 text-stone-600">建议仅在确认文档失效、上传错误或不再需要保留阅读记录时执行。</p>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"

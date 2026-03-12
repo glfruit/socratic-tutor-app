@@ -4,12 +4,22 @@ import type { DocumentSummary } from "@/types";
 interface DocumentListProps {
   documents: DocumentSummary[];
   isLoading?: boolean;
+  isLoadingMore?: boolean;
   hasMore?: boolean;
   onLoadMore?: () => void;
   onDelete?: (documentId: string) => void;
+  total?: number;
 }
 
-export function DocumentList({ documents, isLoading = false, hasMore = false, onLoadMore, onDelete }: DocumentListProps) {
+export function DocumentList({
+  documents,
+  isLoading = false,
+  isLoadingMore = false,
+  hasMore = false,
+  onLoadMore,
+  onDelete,
+  total
+}: DocumentListProps) {
   if (isLoading) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -44,15 +54,21 @@ export function DocumentList({ documents, isLoading = false, hasMore = false, on
       </div>
 
       {hasMore && onLoadMore ? (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-3">
           <button
             type="button"
             onClick={onLoadMore}
+            disabled={isLoadingMore}
             className="inline-flex min-h-12 items-center justify-center rounded-[18px] border border-[#d6cdbf] bg-[#fbf7f1] px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355c7d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#f7f1e6]"
           >
-            加载更多
+            {isLoadingMore ? "加载更多文档中..." : "加载更多"}
           </button>
+          {typeof total === "number" ? (
+            <p className="text-sm text-stone-600">已显示 {documents.length} / {total} 份文档</p>
+          ) : null}
         </div>
+      ) : typeof total === "number" && documents.length > 0 ? (
+        <p className="text-center text-sm text-stone-600">已显示全部 {total} 份文档</p>
       ) : null}
     </div>
   );

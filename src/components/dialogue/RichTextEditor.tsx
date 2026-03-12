@@ -44,7 +44,7 @@ function normalizeHtml(html: string) {
 }
 
 function escapeMarkdownText(value: string) {
-  return value.replace(/([\\`*_{}\[\]()#+\-.!|>])/g, "\\$1");
+  return value.replace(/([\\`*_{}[\]()#+\-.!|>])/g, "\\$1");
 }
 
 function renderTextNode(node: JSONContent) {

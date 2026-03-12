@@ -8,7 +8,7 @@ import { useReadingStore } from "@/stores/useReadingStore";
 
 export function BookReaderPage() {
   const { documentId = "" } = useParams();
-  const { document, session, currentChapter, messages, selectedText, initializeReader, selectChapter, setSelectedText, sendMessage, isStreaming, isLoading } =
+  const { document, session, currentChapter, messages, selectedText, initializeReader, selectChapter, setSelectedText, sendMessage, isStreaming, isLoading, progressState, error } =
     useReadingStore((state) => ({
       document: state.document,
       session: state.session,
@@ -20,7 +20,9 @@ export function BookReaderPage() {
       setSelectedText: state.setSelectedText,
       sendMessage: state.sendMessage,
       isStreaming: state.isStreaming,
-      isLoading: state.isLoading
+      isLoading: state.isLoading,
+      progressState: state.progressState,
+      error: state.error
     }));
 
   useEffect(() => {
@@ -66,8 +68,15 @@ export function BookReaderPage() {
         chapters={document?.chapters ?? []}
         activeChapterId={currentChapter?.id}
         progress={session?.progress ?? document?.progress ?? 0}
+        syncStatus={progressState}
         onSelectChapter={(chapterId) => void selectChapter(chapterId)}
       />
+
+      {error ? (
+        <section className="rounded-[24px] border border-[#e4c7c4] bg-[#f9ecea] px-5 py-4 text-sm text-[#8a4942]">
+          {error}
+        </section>
+      ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)_360px] xl:items-start">
         <ChapterSidebar

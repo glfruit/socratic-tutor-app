@@ -4,10 +4,18 @@ interface ProgressBarProps {
   chapters: Chapter[];
   activeChapterId?: string;
   progress: number;
+  syncStatus?: "idle" | "saving" | "saved" | "error";
   onSelectChapter: (chapterId: string) => void;
 }
 
-export function ProgressBar({ chapters, activeChapterId, progress, onSelectChapter }: ProgressBarProps) {
+const syncStatusLabel = {
+  idle: "尚未开始同步",
+  saving: "正在保存进度",
+  saved: "阅读进度已保存",
+  error: "保存失败，稍后会再次尝试"
+} as const;
+
+export function ProgressBar({ chapters, activeChapterId, progress, syncStatus = "idle", onSelectChapter }: ProgressBarProps) {
   const activeIndex = chapters.findIndex((chapter) => chapter.id === activeChapterId);
   const previousChapter = activeIndex > 0 ? chapters[activeIndex - 1] : null;
   const nextChapter = activeIndex >= 0 && activeIndex < chapters.length - 1 ? chapters[activeIndex + 1] : null;
@@ -22,6 +30,19 @@ export function ProgressBar({ chapters, activeChapterId, progress, onSelectChapt
             <p className="text-sm leading-7 text-stone-600">
               {activeIndex >= 0 ? `正在第 ${activeIndex + 1} / ${chapters.length} 节` : `共 ${chapters.length} 节`}
             </p>
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                syncStatus === "saved"
+                  ? "bg-[#dfe8da] text-[#315444]"
+                  : syncStatus === "saving"
+                    ? "bg-[#efe2be] text-[#7f5f1f]"
+                    : syncStatus === "error"
+                      ? "bg-[#ead7d4] text-[#7d3f34]"
+                      : "bg-[#eee7da] text-stone-600"
+              }`}
+            >
+              {syncStatusLabel[syncStatus]}
+            </span>
           </div>
         </div>
 

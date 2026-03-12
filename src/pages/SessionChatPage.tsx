@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { Modal } from "@/components/common/Modal";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { MessageInput } from "@/components/dialogue/MessageInput";
 import { MessageList } from "@/components/dialogue/MessageList";
@@ -21,6 +22,7 @@ const contextMatchesRoute = (
 ) => activeContext?.subject === subject && activeContext?.level === level;
 
 export function SessionChatPage() {
+  const [pendingDeleteMaterialId, setPendingDeleteMaterialId] = useState<string | null>(null);
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -74,6 +76,7 @@ export function SessionChatPage() {
   const isFreshRoute = routeId === "new";
   const visibleMessages = isFreshRoute || currentSessionId !== routeId ? [] : messages;
   const visibleMaterials = isFreshRoute || currentSessionId !== routeId ? [] : materials;
+  const pendingMaterial = visibleMaterials.find((item) => item.id === pendingDeleteMaterialId) ?? null;
 
   useLayoutEffect(() => {
     const previousRouteKey = routeSessionKeyRef.current;
@@ -206,7 +209,7 @@ export function SessionChatPage() {
           void uploadMaterial(file, { subject, level: levelValue });
         }}
         onDelete={(materialId) => {
-          void deleteMaterial(materialId);
+          setPendingDeleteMaterialId(materialId);
         }}
       />
 
@@ -219,6 +222,53 @@ export function SessionChatPage() {
         error={error}
         onStop={stopStreaming}
       />
+
+      <Modal
+        isOpen={Boolean(pendingMaterial)}
+        onClose={() => {
+          if (!pendingMaterial || !deletingMaterialIds.includes(pendingMaterial.id)) {
+            setPendingDeleteMaterialId(null);
+          }
+        }}
+        title="确认删除资料"
+        description="这份资料会从当前学习会话移除，后续追问将不再引用它。删除后无法恢复。"
+      >
+        <div className="space-y-5">
+          <div className="rounded-[22px] border border-[#ebc9c1] bg-[#fbefec] px-4 py-4 text-sm leading-7 text-stone-700">
+            <p className="font-semibold text-stone-950">{pendingMaterial?.title}</p>
+            <p className="mt-2">{pendingMaterial?.filename}</p>
+          </div>
+          <p className="text-sm leading-7 text-stone-600">如果这份资料仍会参与当前问题的追问，建议保留；否则可以在这里清理当前会话的上下文。</p>
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button
+              type="button"
+              onClick={() => setPendingDeleteMaterialId(null)}
+              disabled={Boolean(pendingMaterial && deletingMaterialIds.includes(pendingMaterial.id))}
+              className="inline-flex min-h-11 items-center justify-center rounded-[16px] border border-[#d6cdbf] bg-white px-4 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-[#f4eee4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#355c7d] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf7f1] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              取消
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!pendingMaterial) {
+                  return;
+                }
+
+                void deleteMaterial(pendingMaterial.id).then((ok) => {
+                  if (ok) {
+                    setPendingDeleteMaterialId(null);
+                  }
+                });
+              }}
+              disabled={Boolean(pendingMaterial && deletingMaterialIds.includes(pendingMaterial.id))}
+              className="inline-flex min-h-11 items-center justify-center rounded-[16px] bg-[#9a4d42] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#833e35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9a4d42] focus-visible:ring-offset-2 focus-visible:ring-offset-[#fbf7f1] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {pendingMaterial && deletingMaterialIds.includes(pendingMaterial.id) ? "删除中..." : "确认删除"}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

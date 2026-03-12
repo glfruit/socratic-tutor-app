@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { ChatMessage } from "@/types";
 
 interface AIChatPanelProps {
@@ -11,6 +11,21 @@ interface AIChatPanelProps {
 
 export function AIChatPanel({ documentTitle, currentChapterTitle, messages, isStreaming, onSend }: AIChatPanelProps) {
   const [content, setContent] = useState("");
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const container = scrollRef.current;
+    if (!container) {
+      return;
+    }
+
+    if (typeof container.scrollTo === "function") {
+      container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      return;
+    }
+
+    container.scrollTop = container.scrollHeight;
+  }, [messages, isStreaming]);
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -34,7 +49,7 @@ export function AIChatPanel({ documentTitle, currentChapterTitle, messages, isSt
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
         {messages.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-[#d5cab8] bg-[#faf6ef] px-4 py-5 text-sm leading-7 text-stone-600">
             还没有开始对话。可以先选中一段文字，再问“作者在这里的关键假设是什么？”
@@ -53,7 +68,7 @@ export function AIChatPanel({ documentTitle, currentChapterTitle, messages, isSt
                 <p className={`mb-2 text-[11px] font-semibold uppercase tracking-[0.22em] ${message.role === "assistant" ? "text-[#7b6e59]" : "text-[#355c7d]"}`}>
                   {message.role === "assistant" ? "Tutor" : "You"}
                 </p>
-                <p>{message.content || (isStreaming && message.role === "assistant" ? "思考中..." : "")}</p>
+                <p>{message.content || (isStreaming && message.role === "assistant" ? "正在沿着原文整理回应..." : "")}</p>
                 {message.metadata?.referencedText ? (
                   <p className="mt-3 rounded-[16px] bg-white/80 px-3 py-2 text-xs leading-6 text-stone-600">
                     引用：{message.metadata.referencedText}
@@ -63,6 +78,7 @@ export function AIChatPanel({ documentTitle, currentChapterTitle, messages, isSt
             ))}
           </div>
         )}
+        {isStreaming ? <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-[#4a647d]">Streaming response</p> : null}
       </div>
 
       <form onSubmit={handleSubmit} className="border-t border-[#ddd3c4] bg-[#f6f1e8] px-4 py-4 sm:px-5">

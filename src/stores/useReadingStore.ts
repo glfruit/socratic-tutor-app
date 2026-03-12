@@ -11,6 +11,8 @@ interface ReadingState {
   messages: ChatMessage[];
   isLoading: boolean;
   isStreaming: boolean;
+  progressState: "idle" | "saving" | "saved" | "error";
+  error: string | null;
   initializeReader: (documentId: string) => Promise<void>;
   selectChapter: (chapterId: string) => Promise<void>;
   setSelectedText: (text: string) => void;
@@ -38,21 +40,32 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
   messages: [],
   isLoading: false,
   isStreaming: false,
+  progressState: "idle",
+  error: null,
 
   async initializeReader(documentId) {
-    set({ isLoading: true });
-    const [document, session] = await Promise.all([
-      documentService.getDocument(documentId),
-      readingService.createSession(documentId)
-    ]);
+    set({ isLoading: true, error: null, progressState: "idle", selectedText: "" });
 
-    set({
-      document,
-      session,
-      currentChapter: session.currentChapter ?? document.chapters[0] ?? null,
-      messages: session.messages,
-      isLoading: false
-    });
+    try {
+      const [document, session] = await Promise.all([documentService.getDocument(documentId), readingService.createSession(documentId)]);
+
+      set({
+        document,
+        session,
+        currentChapter: session.currentChapter ?? document.chapters[0] ?? null,
+        messages: session.messages,
+        isLoading: false
+      });
+    } catch {
+      set({
+        document: null,
+        session: null,
+        currentChapter: null,
+        messages: [],
+        isLoading: false,
+        error: "阅读内容加载失败，请稍后重试。"
+      });
+    }
   },
 
   async selectChapter(chapterId) {
@@ -63,14 +76,16 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
     set((state) => ({
       currentChapter,
       selectedText: "",
+      progressState: currentChapter ? "saving" : state.progressState,
       session: state.session && currentChapter ? { ...state.session, currentChapter, progress } : state.session
     }));
 
     if (session && currentChapter) {
       try {
         await readingService.updateProgress(session.id, currentChapter.id, progress);
+        set({ progressState: "saved" });
       } catch {
-        // Keep local navigation responsive even if progress sync fails.
+        set({ progressState: "error" });
       }
     }
   },
@@ -102,35 +117,51 @@ export const useReadingStore = create<ReadingState>((set, get) => ({
 
     set({
       messages: [...messages, userMessage, assistantMessage],
-      isStreaming: true
+      isStreaming: true,
+      error: null
     });
 
     const usedContext = context?.selectedText || selectedText ? { ...context, selectedText: context?.selectedText ?? selectedText } : context;
 
-    const result = await readingService.streamMessage(session.id, content, usedContext, (chunk) => {
+    try {
+      const result = await readingService.streamMessage(session.id, content, usedContext, (chunk) => {
+        set((state) => {
+          const updated = [...state.messages];
+          const lastIndex = updated.length - 1;
+          updated[lastIndex] = { ...updated[lastIndex], content: `${updated[lastIndex].content}${chunk}` };
+          return { messages: updated };
+        });
+      });
+
       set((state) => {
         const updated = [...state.messages];
         const lastIndex = updated.length - 1;
-        updated[lastIndex] = { ...updated[lastIndex], content: `${updated[lastIndex].content}${chunk}` };
-        return { messages: updated };
+        updated[lastIndex] = { ...updated[lastIndex], id: result.messageId };
+        return { messages: updated, isStreaming: false, selectedText: "", error: null };
       });
-    });
 
-    set((state) => {
-      const updated = [...state.messages];
-      const lastIndex = updated.length - 1;
-      updated[lastIndex] = { ...updated[lastIndex], id: result.messageId };
-      return { messages: updated, isStreaming: false, selectedText: "" };
-    });
+      if (currentChapter) {
+        const progress = Math.max(getChapterProgress(document?.chapters ?? [], currentChapter.id), Math.min((session.progress ?? 0) + 5, 100));
 
-    if (currentChapter) {
-      const progress = Math.max(getChapterProgress(document?.chapters ?? [], currentChapter.id), Math.min((session.progress ?? 0) + 5, 100));
+        set((state) => ({
+          progressState: "saving",
+          session: state.session ? { ...state.session, progress, currentChapter } : state.session
+        }));
 
+        try {
+          await readingService.updateProgress(session.id, currentChapter.id, progress);
+          set({ progressState: "saved" });
+        } catch {
+          set({ progressState: "error" });
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "发送阅读问题失败，请稍后重试。";
       set((state) => ({
-        session: state.session ? { ...state.session, progress, currentChapter } : state.session
+        messages: state.messages.slice(0, -1),
+        isStreaming: false,
+        error: message
       }));
-
-      void readingService.updateProgress(session.id, currentChapter.id, progress);
     }
   }
 }));

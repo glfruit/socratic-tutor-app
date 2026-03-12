@@ -5,7 +5,6 @@ import { DocumentForm, type DocumentFormValue } from "@/components/upload/Docume
 import { FileUpload } from "@/components/upload/FileUpload";
 import { UploadProgress } from "@/components/upload/UploadProgress";
 import { useDocumentsStore } from "@/stores/useDocumentsStore";
-import type { DocumentType } from "@/types";
 
 type UploadStage = "idle" | "validating" | "uploading" | "processing" | "success" | "error";
 
