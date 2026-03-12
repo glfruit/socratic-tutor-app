@@ -128,11 +128,11 @@
 - [x] 7.3 创建 usePreferencesStore
 - [x] 7.4 更新 useAuthStore 添加偏好信息
 
-### API 服务
-- [ ] 8.1 更新 api.ts 添加新接口
-- [ ] 8.2 创建 documentService.ts
-- [ ] 8.3 创建 readingService.ts
-- [ ] 8.4 创建 preferenceService.ts
+### API 服务 🟢 完成
+- [x] 8.1 更新 api.ts 添加新接口
+- [x] 8.2 创建 documentService.ts
+- [x] 8.3 创建 readingService.ts
+- [x] 8.4 创建 preferenceService.ts
 
 ### 测试
 - [ ] 9.1 组件测试：FileUpload
