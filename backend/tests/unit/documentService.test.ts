@@ -32,6 +32,36 @@ describe('DocumentService', () => {
     expect(queue.enqueue).toHaveBeenCalledWith({ documentId: 'doc1' });
   });
 
+  it('creates a document without queueing when no processing queue is configured', async () => {
+    const prisma = createPrismaMock();
+    prisma.document.create.mockResolvedValue({ id: 'doc2', status: DocumentStatus.PROCESSING });
+    const service = new DocumentService(prisma as never, {
+      storageRoot: '/tmp/uploads',
+      writeFile: vi.fn().mockResolvedValue(undefined),
+      mkdir: vi.fn().mockResolvedValue(undefined),
+      unlink: vi.fn().mockResolvedValue(undefined)
+    });
+
+    const document = await service.uploadDocument('u1', {
+      file: {
+        originalname: 'geometry.pdf',
+        mimetype: 'application/pdf',
+        size: 24,
+        buffer: Buffer.from('pdf')
+      },
+      type: DocumentType.MATERIAL
+    });
+
+    expect(document.id).toBe('doc2');
+    expect(prisma.document.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          title: 'geometry'
+        })
+      })
+    );
+  });
+
   it('returns a user-scoped document with chapters', async () => {
     const prisma = createPrismaMock();
     prisma.document.findFirst.mockResolvedValue({ id: 'doc1', chapters: [{ id: 'c1' }] });
@@ -83,6 +113,22 @@ describe('DocumentService', () => {
     );
   });
 
+  it('lists documents without optional filters', async () => {
+    const prisma = createPrismaMock();
+    prisma.document.findMany.mockResolvedValue([]);
+    prisma.document.count.mockResolvedValue(0);
+    const service = new DocumentService(prisma as never);
+
+    const result = await service.listDocuments('u1', { page: 1 });
+
+    expect(result.pagination).toEqual({ page: 1, pageSize: 20, total: 0 });
+    expect(prisma.document.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { userId: 'u1' }
+      })
+    );
+  });
+
   it('throws when document lookup misses and supports processing helpers', async () => {
     const prisma = createPrismaMock();
     prisma.document.findFirst.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 'doc2' });
@@ -97,6 +143,14 @@ describe('DocumentService', () => {
 
     expect(results).toEqual([{ content: 'match' }]);
     expect(prisma.$queryRaw).toHaveBeenCalled();
+  });
+
+  it('throws when processing document lookup misses', async () => {
+    const prisma = createPrismaMock();
+    prisma.document.findFirst.mockResolvedValue(null);
+    const service = new DocumentService(prisma as never);
+
+    await expect(service.getDocumentForProcessing('missing')).rejects.toThrow('Document not found');
   });
 
   it('updates processing result and writes embeddings through raw SQL', async () => {
@@ -131,5 +185,33 @@ describe('DocumentService', () => {
     expect(prisma.chapter.createMany).toHaveBeenCalled();
     expect(prisma.$executeRawUnsafe).toHaveBeenCalled();
     expect(prisma.document.update).toHaveBeenCalled();
+  });
+
+  it('updates processing status without recreating chapters or chunks when parsing fails', async () => {
+    const prisma = createPrismaMock();
+    prisma.$transaction.mockImplementation(async (callback: (tx: any) => Promise<void>) => {
+      await callback(prisma);
+    });
+    prisma.chapter.deleteMany.mockResolvedValue({ count: 0 });
+    prisma.documentChunk.deleteMany.mockResolvedValue({ count: 0 });
+    prisma.document.update.mockResolvedValue({ id: 'doc1', status: DocumentStatus.ERROR });
+    const service = new DocumentService(prisma as never);
+
+    await service.updateProcessingResult('doc1', {
+      status: DocumentStatus.ERROR,
+      errorMessage: 'parse failed'
+    });
+
+    expect(prisma.chapter.createMany).not.toHaveBeenCalled();
+    expect(prisma.documentChunk.createMany).not.toHaveBeenCalled();
+    expect(prisma.$executeRawUnsafe).not.toHaveBeenCalled();
+    expect(prisma.document.update).toHaveBeenCalledWith({
+      where: { id: 'doc1' },
+      data: {
+        status: DocumentStatus.ERROR,
+        errorMessage: 'parse failed',
+        processedAt: null
+      }
+    });
   });
 });

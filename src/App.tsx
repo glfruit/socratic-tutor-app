@@ -2,7 +2,6 @@ import { Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useAuthStore } from "@/stores/authStore";
-import { DashboardPage } from "@/pages/DashboardPage";
 import { DocumentLibraryPage } from "@/pages/DocumentLibraryPage";
 import { HomeSelectionPage } from "@/pages/HomeSelectionPage";
 import { BookReaderPage } from "@/pages/BookReaderPage";
@@ -43,7 +42,7 @@ export default function App() {
       <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
         <Route element={<ProtectedShell />}>
           <Route path="/home" element={<HomeSelectionPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/dashboard" element={<Navigate to="/home" replace />} />
           <Route path="/subjects" element={<SubjectsPage />} />
           <Route path="/library" element={<DocumentLibraryPage />} />
           <Route path="/upload" element={<UploadPage />} />

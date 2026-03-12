@@ -49,7 +49,7 @@ describe('SocraticConversationService', () => {
 
     const prompt = service.buildSystemPrompt(Level.MIDDLE_SCHOOL, 'study');
 
-    expect(prompt).toContain('MIDDLE_SCHOOL');
-    expect(prompt).toContain('study');
+    expect(prompt).toContain('强调关键术语辨析');
+    expect(prompt).toContain('模式：学科学习');
   });
 });

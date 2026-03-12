@@ -3,10 +3,16 @@
 @tailwind utilities;
 
 :root {
-  font-family: "Noto Sans SC", "Inter", system-ui, sans-serif;
-  color: #0f172a;
-  background-color: #f8f9fa;
+  font-family: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: oklch(24% 0.02 248);
+  background-color: #f3efe6;
   color-scheme: light;
+  font-kerning: normal;
+  --page-bg: #f3efe6;
+  --ink: oklch(24% 0.02 248);
+  --muted-ink: oklch(46% 0.03 248);
+  --panel-warm: #f7f2e9;
+  --panel-cool: #e7edf3;
 }
 
 :root.dark {
@@ -14,7 +20,10 @@
 }
 
 html {
-  background: #f8f9fa;
+  background:
+    radial-gradient(circle at top left, rgba(209, 186, 151, 0.18), transparent 24rem),
+    radial-gradient(circle at right 20%, rgba(113, 145, 177, 0.14), transparent 22rem),
+    var(--page-bg);
 }
 
 html.dark {
@@ -25,6 +34,22 @@ body {
   margin: 0;
   min-height: 100vh;
   background: inherit;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Songti SC", "Noto Serif SC", serif;
+  font-kerning: normal;
 }
 
 .tiptap-editor p.is-editor-empty:first-child::before {

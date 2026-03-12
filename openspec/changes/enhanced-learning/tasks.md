@@ -63,6 +63,15 @@
 - [ ] 8.4 集成测试：完整阅读流程
 - [ ] 8.5 E2E 测试：文件上传 → 解析 → 对话
 
+### Sprint 2 / 2.5 后端重构
+- [ ] 9.1 拆分 `src/app.ts` 中的认证路由到独立模块 (`routes/auth.ts`)
+- [ ] 9.2 拆分学习路由到独立模块 (`routes/learning.ts`)
+- [ ] 9.3 拆分阅读路由到独立模块 (`routes/reading.ts`)
+- [ ] 9.4 抽离共享中间件与校验逻辑（认证、requestId、zod schema 组织）
+- [ ] 9.5 重构路由注册层，保留统一 `/api/v2` 挂载入口
+- [ ] 9.6 为拆分后的路由补齐回归测试，确保行为与现状一致
+- [ ] 9.7 验证 `app.ts` 仅保留应用装配、全局中间件、错误处理与路由挂载职责
+
 ---
 
 ## 前端任务 (Frontend)
@@ -130,6 +139,15 @@
 - [ ] 9.2 组件测试：BookReader
 - [ ] 9.3 集成测试：上传 → 阅读流程
 - [ ] 9.4 E2E 测试：完整用户场景
+
+### Sprint 2 / 2.5 前端定向重构（Impeccable）
+- [ ] 10.1 使用 `impeccable-frontend-design` 为首页双入口页建立新的视觉方向与信息层级（`src/app/page.tsx`）
+- [ ] 10.2 清理用户界面中的工程文案与任务编号泄露（如 Sprint/FIX 标签）
+- [ ] 10.3 重构阅读会话主界面，使阅读内容成为主角并弱化通用 AI chat 工作台感（`src/app/reading/session/[id]/page.tsx`）
+- [ ] 10.4 统一阅读器核心组件视觉语言与交互层级（`Sidebar` / `ChapterContent` / `ReadingChat` / `StrategySelector`）
+- [ ] 10.5 重构学习入口链路视觉层级（`subjects` / `assessment` / `learning session`），强化“学习旅程”而非通用问卷/聊天页感
+- [ ] 10.6 在不改变核心业务行为的前提下，建立更明确的页面级设计 token / typography / spacing 规则
+- [ ] 10.7 为关键页面补充视觉回归检查与必要测试，确保重构不破坏现有流程
 
 ---
 

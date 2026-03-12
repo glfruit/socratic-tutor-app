@@ -31,7 +31,7 @@ services:
     command: sh -c "npx prisma migrate deploy && node dist/index.js"
 
   postgres:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg16
     container_name: socratic-postgres
     environment:
       POSTGRES_DB: socratic
