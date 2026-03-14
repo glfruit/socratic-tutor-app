@@ -11,24 +11,25 @@ export class ProgressService {
       this.prisma.learningRecord.findMany({ where: { userId } })
     ]);
 
-    const masteryDistribution = records.reduce<Record<MasteryLevel, number>>(
-      (acc, item) => {
-        acc[item.masteryLevel] += 1;
-        return acc;
-      },
-      {
-        BEGINNER: 0,
-        UNDERSTANDING: 0,
-        PROFICIENT: 0,
-        MASTERY: 0
-      }
-    );
+    const masteryPercent: Record<MasteryLevel, number> = {
+      BEGINNER: 15,
+      UNDERSTANDING: 45,
+      PROFICIENT: 75,
+      MASTERY: 95
+    };
 
     return {
-      sessionCount,
-      messageCount,
-      totalConcepts: records.length,
-      masteryDistribution
+      stats: [
+        { label: '总会话', value: sessionCount },
+        { label: '已掌握概念', value: records.length },
+        { label: '总提问', value: messageCount }
+      ],
+      radar: [] as Array<{ label: string; value: number }>,
+      mastery: records.map((r) => ({
+        concept: r.concept,
+        level: r.masteryLevel,
+        percent: masteryPercent[r.masteryLevel]
+      }))
     };
   }
 

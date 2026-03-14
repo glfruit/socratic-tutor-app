@@ -13,6 +13,7 @@ import { SessionsHistoryPage } from "@/pages/SessionsHistoryPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { SubjectsPage } from "@/pages/SubjectsPage";
 import { UploadPage } from "@/pages/UploadPage";
+import { PlansPage } from "@/pages/PlansPage";
 
 function ProtectedShell() {
   const navigate = useNavigate();
@@ -50,6 +51,7 @@ export default function App() {
           <Route path="/sessions" element={<SessionsHistoryPage />} />
           <Route path="/sessions/:id" element={<SessionChatPage />} />
           <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/plans" element={<PlansPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>
       </Route>

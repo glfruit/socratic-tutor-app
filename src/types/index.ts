@@ -142,3 +142,17 @@ export interface UploadDocumentInput {
   title?: string;
   description?: string;
 }
+
+export type LearningPlanStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+
+export interface LearningPlan {
+  id: string;
+  title: string;
+  description?: string;
+  subject: string;
+  targetDate?: string;
+  status: LearningPlanStatus;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -1,6 +1,7 @@
 import {
   DocumentStatus,
   DocumentType,
+  LearningPlanStatus,
   Level,
   MasteryLevel,
   Role,
@@ -92,3 +93,22 @@ export const readingProgressSchema = z.object({
 export const preferenceUpdateSchema = z.object({
   level: z.nativeEnum(Level)
 });
+
+export const learningPlanCreateSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().max(2000).optional(),
+  subject: z.string().min(1),
+  targetDate: z.coerce.date().optional()
+});
+
+export const learningPlanUpdateSchema = z
+  .object({
+    title: z.string().min(1).optional(),
+    description: z.string().max(2000).optional(),
+    subject: z.string().min(1).optional(),
+    targetDate: z.coerce.date().optional(),
+    status: z.nativeEnum(LearningPlanStatus).optional()
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: 'At least one field is required'
+  });

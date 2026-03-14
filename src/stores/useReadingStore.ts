@@ -21,7 +21,7 @@ interface ReadingState {
   sendMessage: (content: string, context?: ReadingMessageContext) => Promise<void>;
 }
 
-let progressSaveTimer: ReturnType<typeof window.setTimeout> | null = null;
+let progressSaveTimer: number | null = null;
 
 const clampProgress = (value: number) => Math.max(0, Math.min(100, Math.round(value)));
 

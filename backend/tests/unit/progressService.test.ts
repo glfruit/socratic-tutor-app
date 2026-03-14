@@ -9,15 +9,23 @@ describe('ProgressService', () => {
     prisma.session.count.mockResolvedValue(3);
     prisma.message.count.mockResolvedValue(20);
     prisma.learningRecord.findMany.mockResolvedValue([
-      { masteryLevel: MasteryLevel.BEGINNER },
-      { masteryLevel: MasteryLevel.PROFICIENT }
+      { concept: 'algebra', masteryLevel: MasteryLevel.BEGINNER },
+      { concept: 'geometry', masteryLevel: MasteryLevel.PROFICIENT }
     ]);
 
     const service = new ProgressService(prisma as any);
     const result = await service.getDashboard('u1');
 
-    expect(result.sessionCount).toBe(3);
-    expect(result.masteryDistribution.PROFICIENT).toBe(1);
+    expect(result.stats).toEqual([
+      { label: '总会话', value: 3 },
+      { label: '已掌握概念', value: 2 },
+      { label: '总提问', value: 20 }
+    ]);
+    expect(result.mastery).toEqual([
+      { concept: 'algebra', level: 'BEGINNER', percent: 15 },
+      { concept: 'geometry', level: 'PROFICIENT', percent: 75 }
+    ]);
+    expect(result.radar).toEqual([]);
   });
 
   it('upserts learning record', async () => {

@@ -51,16 +51,16 @@
 - [ ] 6.4 实现水平选择枚举 (Level)
 
 ### 学习会话增强
-- [ ] 7.1 修改 POST /sessions 支持 documentIds 参数
-- [ ] 7.2 实现会话资料上传 POST /sessions/:id/upload
-- [ ] 7.3 修改 AI 服务支持水平选择
-- [ ] 7.4 实现基于水平的 Prompt 调整
+- [x] 7.1 修改 POST /sessions 支持 documentIds 参数
+- [x] 7.2 实现会话资料上传 POST /sessions/:id/upload
+- [x] 7.3 修改 AI 服务支持水平选择
+- [x] 7.4 实现基于水平的 Prompt 调整
 
 ### 测试 🟨 部分完成
 - [x] 8.1 单元测试：文件上传 (documentService.test.ts)
 - [ ] 8.2 单元测试：文档解析
 - [ ] 8.3 单元测试：Embedding 生成
-- [ ] 8.4 集成测试：完整阅读流程
+- [x] 8.4 集成测试：完整阅读流程
 - [ ] 8.5 E2E 测试：文件上传 → 解析 → 对话
 
 ### Sprint 2 / 2.5 后端重构 🟨 进行中
@@ -81,7 +81,7 @@
 - [x] 1.2 创建 ModeCard 组件 (学习/阅读)
 - [x] 1.3 创建用户统计面板
 - [x] 1.4 创建最近活动快捷入口
-- [ ] 1.5 修改路由配置，登录后跳转到 HomeSelection
+- [x] 1.5 修改路由配置，登录后跳转到 HomeSelection
 
 ### 文档上传 🟢 完成
 - [x] 2.1 创建 FileUpload 组件 (拖拽上传)

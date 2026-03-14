@@ -74,6 +74,7 @@ model User {
   documents       Document[]
   readingSessions BookReadingSession[]
   userPreference  UserPreference?
+  learningPlans   LearningPlan[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 }
@@ -218,6 +219,29 @@ model BookMessage {
   createdAt DateTime        @default(now())
 
   @@index([sessionId, createdAt])
+}
+
+enum LearningPlanStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model LearningPlan {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id])
+  title       String
+  description String?
+  subject     String
+  targetDate  DateTime?
+  status      LearningPlanStatus @default(PENDING)
+  completedAt DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId, status])
 }
 
 model UserPreference {

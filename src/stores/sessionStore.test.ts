@@ -3,7 +3,9 @@ import { sessionService } from "@/services/sessionService";
 
 vi.mock("@/services/sessionService", () => ({
   sessionService: {
+    getSessions: vi.fn(),
     getSessionMessages: vi.fn(),
+    getSessionMaterials: vi.fn(),
     createSession: vi.fn(),
     sendMessage: vi.fn()
   }

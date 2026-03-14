@@ -9,6 +9,7 @@ interface AppLayoutProps {
 const navItems = [
   { to: "/home", label: "主页" },
   { to: "/subjects", label: "学科" },
+  { to: "/plans", label: "计划" },
   { to: "/library", label: "文档库" },
   { to: "/upload", label: "上传" },
   { to: "/sessions", label: "会话" },

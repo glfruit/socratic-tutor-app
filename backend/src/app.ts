@@ -9,6 +9,7 @@ import subjectRoutes from './routes/subjectRoutes';
 import documentRoutes from './routes/documentRoutes';
 import readingRoutes from './routes/readingRoutes';
 import preferenceRoutes from './routes/preferenceRoutes';
+import planRoutes from './routes/planRoutes';
 import { authMiddleware } from './middleware/authMiddleware';
 import { container } from './config/container';
 import { rateLimitMiddleware } from './middleware/rateLimitMiddleware';
@@ -41,6 +42,7 @@ export const createApp = () => {
   app.use('/api/v2/documents', documentRoutes);
   app.use('/api/v2/reading-sessions', readingRoutes);
   app.use('/api/v2/preferences', preferenceRoutes);
+  app.use('/api/v2/plans', planRoutes);
 
   app.use(notFoundMiddleware);
   app.use(errorMiddleware);

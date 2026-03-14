@@ -62,6 +62,13 @@ export const createPrismaMock = () => ({
     findUnique: vi.fn(),
     upsert: vi.fn()
   },
+  learningPlan: {
+    create: vi.fn(),
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn()
+  },
   $queryRaw: vi.fn(),
   $executeRawUnsafe: vi.fn(),
   $transaction: vi.fn()

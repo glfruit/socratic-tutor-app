@@ -14,6 +14,7 @@ import { DocumentService } from '../services/documentService';
 import { SocraticConversationService } from '../services/socraticConversationService';
 import { ReadingService } from '../services/readingService';
 import { PreferenceService } from '../services/preferenceService';
+import { PlanService } from '../services/planService';
 import { DocumentProcessingJob } from '../jobs/documentProcessingJob';
 
 const contextService = new ContextService(redis);
@@ -46,6 +47,7 @@ export const container = {
   socraticConversationService,
   readingService: new ReadingService(prisma, socraticConversationService),
   preferenceService: new PreferenceService(prisma),
+  planService: new PlanService(prisma),
   documentProcessingJob,
   redis
 };
