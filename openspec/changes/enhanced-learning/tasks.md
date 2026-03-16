@@ -25,7 +25,7 @@
 - [x] 3.5 创建 EPUB 解析服务 (提取目录和内容)
 - [x] 3.6 创建 DOCX/TXT 解析服务
 - [x] 3.7 创建文本分块服务 (chunking)
-- [ ] 3.8 实现后台解析队列 (bullmq)
+- [x] 3.8 实现后台解析队列 (bullmq)
 
 ### Embedding 与向量检索 ✅ 完成
 - [x] 4.1 安装 pgvector prisma 扩展
@@ -42,13 +42,13 @@
 - [x] 5.4 实现 POST /reading-sessions/:id/messages 接口
 - [x] 5.5 实现 SSE 流式响应
 - [x] 5.6 实现进度更新 PATCH /reading-sessions/:id/progress
-- [ ] 5.7 创建苏格拉底式对话 Prompt 模板
+- [x] 5.7 创建苏格拉底式对话 Prompt 模板
 
-### 用户偏好 API
-- [ ] 6.1 创建 UserPreference 控制器
-- [ ] 6.2 实现 GET /preferences 接口
-- [ ] 6.3 实现 PATCH /preferences 接口
-- [ ] 6.4 实现水平选择枚举 (Level)
+### 用户偏好 API ✅ 完成
+- [x] 6.1 创建 UserPreference 控制器
+- [x] 6.2 实现 GET /preferences 接口
+- [x] 6.3 实现 PATCH /preferences 接口
+- [x] 6.4 实现水平选择枚举 (Level)
 
 ### 学习会话增强
 - [x] 7.1 修改 POST /sessions 支持 documentIds 参数
@@ -58,8 +58,8 @@
 
 ### 测试 🟨 部分完成
 - [x] 8.1 单元测试：文件上传 (documentService.test.ts)
-- [ ] 8.2 单元测试：文档解析
-- [ ] 8.3 单元测试：Embedding 生成
+- [x] 8.2 单元测试：文档解析
+- [x] 8.3 单元测试：Embedding 生成
 - [x] 8.4 集成测试：完整阅读流程
 - [ ] 8.5 E2E 测试：文件上传 → 解析 → 对话
 
@@ -70,7 +70,7 @@
 - [x] 9.4 抽离共享中间件与校验逻辑（认证、requestId、zod schema 组织）
 - [x] 9.5 重构路由注册层，保留统一 `/api/v2` 挂载入口
 - [ ] 9.6 为拆分后的路由补齐回归测试，确保行为与现状一致
-- [ ] 9.7 验证 `app.ts` 仅保留应用装配、全局中间件、错误处理与路由挂载职责
+- [x] 9.7 验证 `app.ts` 仅保留应用装配、全局中间件、错误处理与路由挂载职责
 
 ---
 
@@ -135,8 +135,8 @@
 - [x] 8.4 创建 preferenceService.ts
 
 ### 测试
-- [ ] 9.1 组件测试：FileUpload
-- [ ] 9.2 组件测试：BookReader
+- [x] 9.1 组件测试：FileUpload
+- [x] 9.2 组件测试：BookReader
 - [ ] 9.3 集成测试：上传 → 阅读流程
 - [ ] 9.4 E2E 测试：完整用户场景
 
