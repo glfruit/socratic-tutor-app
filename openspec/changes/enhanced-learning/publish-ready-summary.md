@@ -11,9 +11,10 @@ Baseline commit: `579f607 feat: add learning plans workflow`
 ## Current Repo Truth
 
 - Working tree residuals:
-  - `openspec/changes/enhanced-learning/tasks.md`
-  - `vite.config.ts`
-- No local commit after `579f607`
+  - none
+- New local commits after `579f607`:
+  - `5f97b37 docs: align enhanced-learning publish-ready status`
+  - `1620537 build: split vendor chunks for frontend bundle`
 - Learning-plan batch is already committed and tested
 
 ## Confirmed Completed In This Change Set
@@ -39,6 +40,25 @@ These remain outside the completed learning-plan slice:
   - `9.3` 上传 → 阅读集成测试
   - `9.4` 完整用户场景 E2E
   - `10.2`–`10.7` impeccable 前端定向重构尾项
+
+## Validation Snapshot (2026-03-16)
+
+- frontend build: passed
+  - `npm run build`
+- frontend tests: passed
+  - `22/22 files`, `45/45 tests`
+- frontend coverage gate: failed for strict global threshold
+  - current overall line coverage about `58.29%`
+  - threshold configured as `80%`
+- backend tests: passed
+  - `22/22 files`, `75/75 tests`
+  - overall statements about `89.31%`
+
+Interpretation:
+
+- Build stability is acceptable.
+- Backend quality gate is acceptable.
+- Frontend coverage gate still blocks a strict “deploy-ready” call under the current threshold policy.
 
 ## Boundary Decision
 
