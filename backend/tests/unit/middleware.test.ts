@@ -39,8 +39,11 @@ describe('middleware', () => {
 
   it('rate limit middleware rejects after threshold', async () => {
     const redis: any = {
-      incr: vi.fn().mockResolvedValue(3),
-      expire: vi.fn()
+      multi: vi.fn().mockReturnValue({
+        incr: vi.fn().mockReturnThis(),
+        expire: vi.fn().mockReturnThis(),
+        exec: vi.fn().mockResolvedValue([[null, 3], [null, 1]])
+      })
     };
 
     const middleware = rateLimitMiddleware(redis, { limit: 2, windowSeconds: 60 });
@@ -51,24 +54,31 @@ describe('middleware', () => {
     expect(next.mock.calls[0][0]).toBeInstanceOf(AppError);
   });
 
-  it('rate limit middleware sets expire on first hit', async () => {
+  it('rate limit middleware allows requests under threshold', async () => {
+    const multi = {
+      incr: vi.fn().mockReturnThis(),
+      expire: vi.fn().mockReturnThis(),
+      exec: vi.fn().mockResolvedValue([[null, 1], [null, 1]])
+    };
     const redis: any = {
-      incr: vi.fn().mockResolvedValue(1),
-      expire: vi.fn().mockResolvedValue(1)
+      multi: vi.fn().mockReturnValue(multi)
     };
     const middleware = rateLimitMiddleware(redis, { limit: 10, windowSeconds: 60 });
     const next = vi.fn();
 
     await middleware({ ip: '1.1.1.1' } as any, {} as any, next);
 
-    expect(redis.expire).toHaveBeenCalled();
+    expect(redis.multi).toHaveBeenCalled();
     expect(next).toHaveBeenCalledWith();
   });
 
   it('rate limit middleware skips failure', async () => {
     const redis: any = {
-      incr: vi.fn().mockRejectedValue(new Error('down')),
-      expire: vi.fn()
+      multi: vi.fn().mockReturnValue({
+        incr: vi.fn().mockReturnThis(),
+        expire: vi.fn().mockReturnThis(),
+        exec: vi.fn().mockRejectedValue(new Error('down'))
+      })
     };
     const middleware = rateLimitMiddleware(redis, { limit: 10, windowSeconds: 60 });
     const next = vi.fn();

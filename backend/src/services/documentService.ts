@@ -227,11 +227,8 @@ export class DocumentService {
 
         for (const chunk of input.chunks) {
           if (chunk.embedding && chunk.embedding.length > 0) {
-            await tx.$executeRawUnsafe(
-              'UPDATE "DocumentChunk" SET "embedding" = $1::vector WHERE "id" = $2',
-              `[${chunk.embedding.join(',')}]`,
-              chunk.id
-            );
+            const embeddingStr = `[${chunk.embedding.join(',')}]`;
+            await tx.$executeRaw`UPDATE "DocumentChunk" SET "embedding" = ${embeddingStr}::vector WHERE "id" = ${chunk.id}`;
           }
         }
       }

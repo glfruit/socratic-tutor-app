@@ -16,17 +16,30 @@ export class MessageController {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const generator = await container.messageService.streamMessage(
-      req.user!.userId,
-      req.params.id,
-      req.body.content
-    );
+    let closed = false;
+    req.on('close', () => { closed = true; });
 
-    for await (const chunk of generator) {
-      res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+    try {
+      const generator = await container.messageService.streamMessage(
+        req.user!.userId,
+        req.params.id,
+        req.body.content
+      );
+
+      for await (const chunk of generator) {
+        if (closed) break;
+        res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+      }
+
+      if (!closed) {
+        res.write('data: [DONE]\n\n');
+      }
+    } catch (err) {
+      if (!closed) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
+      }
+    } finally {
+      res.end();
     }
-
-    res.write('data: [DONE]\n\n');
-    res.end();
   }
 }

@@ -162,7 +162,7 @@ describe('DocumentService', () => {
     prisma.documentChunk.deleteMany.mockResolvedValue({ count: 0 });
     prisma.chapter.createMany.mockResolvedValue({ count: 1 });
     prisma.documentChunk.createMany.mockResolvedValue({ count: 1 });
-    prisma.$executeRawUnsafe.mockResolvedValue(1);
+    prisma.$executeRaw.mockResolvedValue(1);
     prisma.document.update.mockResolvedValue({ id: 'doc1' });
     const service = new DocumentService(prisma as never);
 
@@ -183,7 +183,7 @@ describe('DocumentService', () => {
     });
 
     expect(prisma.chapter.createMany).toHaveBeenCalled();
-    expect(prisma.$executeRawUnsafe).toHaveBeenCalled();
+    expect(prisma.$executeRaw).toHaveBeenCalled();
     expect(prisma.document.update).toHaveBeenCalled();
   });
 
@@ -204,7 +204,7 @@ describe('DocumentService', () => {
 
     expect(prisma.chapter.createMany).not.toHaveBeenCalled();
     expect(prisma.documentChunk.createMany).not.toHaveBeenCalled();
-    expect(prisma.$executeRawUnsafe).not.toHaveBeenCalled();
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
     expect(prisma.document.update).toHaveBeenCalledWith({
       where: { id: 'doc1' },
       data: {

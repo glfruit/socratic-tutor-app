@@ -71,6 +71,7 @@ export const createPrismaMock = () => ({
   },
   $queryRaw: vi.fn(),
   $executeRawUnsafe: vi.fn(),
+  $executeRaw: vi.fn(),
   $transaction: vi.fn()
 });
 
@@ -82,5 +83,10 @@ export const createRedisMock = () => ({
   expire: vi.fn(),
   lpush: vi.fn(),
   lrange: vi.fn(),
-  quit: vi.fn()
+  quit: vi.fn(),
+  multi: vi.fn().mockReturnValue({
+    incr: vi.fn().mockReturnThis(),
+    expire: vi.fn().mockReturnThis(),
+    exec: vi.fn().mockResolvedValue([[null, 1], [null, 1]])
+  })
 });

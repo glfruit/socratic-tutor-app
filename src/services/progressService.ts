@@ -1,4 +1,4 @@
-import { api, buildApiPath } from "@/services/api";
+import { api, buildApiPath, USE_MOCKS } from "@/services/api";
 import { mockMastery, mockProgressStats, mockRadar } from "@/services/mockData";
 import type { MasteryRecord, ProgressStat } from "@/types";
 
@@ -13,12 +13,15 @@ export const progressService = {
     try {
       const response = await api.get<ProgressData>(buildApiPath("v1", "/progress/dashboard"));
       return response.data;
-    } catch {
-      return {
-        stats: mockProgressStats,
-        radar: mockRadar,
-        mastery: mockMastery
-      };
+    } catch (error) {
+      if (USE_MOCKS) {
+        return {
+          stats: mockProgressStats,
+          radar: mockRadar,
+          mastery: mockMastery
+        };
+      }
+      throw error;
     }
   }
 };

@@ -9,6 +9,8 @@ export interface ApiErrorPayload {
   details?: unknown;
 }
 
+export const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === "true";
+
 const rawBaseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:10003";
 const normalizedBaseUrl = rawBaseUrl.replace(/\/+$/, "");
 const apiOrigin = normalizedBaseUrl.replace(/\/api\/v\d+$/, "");

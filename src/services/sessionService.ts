@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api, buildApiPath } from "@/services/api";
+import { api, buildApiPath, USE_MOCKS } from "@/services/api";
 import { mockSessionMaterials, mockSessions, mockSubjects } from "@/services/mockData";
 import type { ChatMessage, SessionMaterial, SessionSummary, Subject } from "@/types";
 
@@ -31,8 +31,9 @@ export const sessionService = {
     try {
       const response = await api.get<SessionSummary[]>(buildApiPath("v1", "/sessions"));
       return response.data;
-    } catch {
-      return mockSessions;
+    } catch (error) {
+      if (USE_MOCKS) return mockSessions;
+      throw error;
     }
   },
 
@@ -40,8 +41,9 @@ export const sessionService = {
     try {
       const response = await api.get<Subject[]>(buildApiPath("v1", "/subjects"));
       return response.data;
-    } catch {
-      return mockSubjects;
+    } catch (error) {
+      if (USE_MOCKS) return mockSubjects;
+      throw error;
     }
   },
 
@@ -76,8 +78,9 @@ export const sessionService = {
     try {
       const response = await api.get<SessionMaterial[]>(buildApiPath("v1", `/sessions/${sessionId}/materials`));
       return response.data;
-    } catch {
-      return cloneMockSessionMaterials(sessionId);
+    } catch (error) {
+      if (USE_MOCKS) return cloneMockSessionMaterials(sessionId);
+      throw error;
     }
   },
 
@@ -90,26 +93,33 @@ export const sessionService = {
         headers: { "Content-Type": "multipart/form-data" }
       });
       return response.data;
-    } catch {
-      const material: SessionMaterial = {
-        id: crypto.randomUUID(),
-        sessionId,
-        filename: file.name,
-        title: file.name.replace(/\.[^.]+$/, ""),
-        status: "PROCESSING",
-        createdAt: new Date().toISOString(),
-        size: file.size
-      };
-      mockSessionMaterials[sessionId] = [material, ...(mockSessionMaterials[sessionId] ?? [])];
-      return material;
+    } catch (error) {
+      if (USE_MOCKS) {
+        const material: SessionMaterial = {
+          id: crypto.randomUUID(),
+          sessionId,
+          filename: file.name,
+          title: file.name.replace(/\.[^.]+$/, ""),
+          status: "PROCESSING",
+          createdAt: new Date().toISOString(),
+          size: file.size
+        };
+        mockSessionMaterials[sessionId] = [material, ...(mockSessionMaterials[sessionId] ?? [])];
+        return material;
+      }
+      throw error;
     }
   },
 
   async deleteMaterial(sessionId: string, materialId: string): Promise<void> {
     try {
       await api.delete(buildApiPath("v1", `/sessions/${sessionId}/materials/${materialId}`));
-    } catch {
-      mockSessionMaterials[sessionId] = (mockSessionMaterials[sessionId] ?? []).filter((item) => item.id !== materialId);
+    } catch (error) {
+      if (USE_MOCKS) {
+        mockSessionMaterials[sessionId] = (mockSessionMaterials[sessionId] ?? []).filter((item) => item.id !== materialId);
+        return;
+      }
+      throw error;
     }
   },
 

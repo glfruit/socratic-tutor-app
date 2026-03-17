@@ -1,5 +1,5 @@
 import axios from "axios";
-import { api, buildApiPath, buildApiUrl, getApiErrorMessage } from "@/services/api";
+import { api, buildApiPath, buildApiUrl, getApiErrorMessage, USE_MOCKS } from "@/services/api";
 import { mockReadingSessions } from "@/services/mockData";
 import type { ReadingMessageContext, ReadingSession } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
@@ -25,9 +25,12 @@ export const readingService = {
     try {
       const response = await api.post<ReadingSession>(buildApiPath("v2", "/reading-sessions"), input);
       return response.data;
-    } catch {
-      const session = mockReadingSessions[input.documentId];
-      return session ?? Object.values(mockReadingSessions)[0];
+    } catch (error) {
+      if (USE_MOCKS) {
+        const session = mockReadingSessions[input.documentId];
+        return session ?? Object.values(mockReadingSessions)[0];
+      }
+      throw error;
     }
   },
 
@@ -35,8 +38,9 @@ export const readingService = {
     try {
       const response = await api.get<ReadingSession>(buildApiPath("v2", `/reading-sessions/${sessionId}`));
       return response.data;
-    } catch {
-      return Object.values(mockReadingSessions).find((session) => session.id === sessionId) ?? Object.values(mockReadingSessions)[0];
+    } catch (error) {
+      if (USE_MOCKS) return Object.values(mockReadingSessions).find((session) => session.id === sessionId) ?? Object.values(mockReadingSessions)[0];
+      throw error;
     }
   },
 
@@ -121,18 +125,22 @@ export const readingService = {
         throw new Error(getApiErrorMessage(error, "阅读对话发送失败"));
       }
 
-      const fallback = context?.selectedText
-        ? `你选择了“${context.selectedText.slice(0, 24)}”。作者为什么要这样表述，这个说法依赖了什么前提？`
-        : `先不要急着回答。围绕“${content.slice(0, 18)}”，你认为文本真正想让你分辨的是什么？`;
+      if (USE_MOCKS) {
+        const fallback = context?.selectedText
+          ? `你选择了”${context.selectedText.slice(0, 24)}”。作者为什么要这样表述，这个说法依赖了什么前提？`
+          : `先不要急着回答。围绕”${content.slice(0, 18)}”，你认为文本真正想让你分辨的是什么？`;
 
-      let rendered = "";
-      for (const char of fallback) {
-        await wait(12);
-        rendered += char;
-        onChunk?.(char);
+        let rendered = "";
+        for (const char of fallback) {
+          await wait(12);
+          rendered += char;
+          onChunk?.(char);
+        }
+
+        return { messageId: crypto.randomUUID(), content: rendered };
       }
 
-      return { messageId: crypto.randomUUID(), content: rendered };
+      throw error;
     }
   },
 
@@ -140,10 +148,11 @@ export const readingService = {
     try {
       await api.patch(buildApiPath("v2", `/reading-sessions/${sessionId}/progress`), { chapterId, progress });
     } catch (error) {
-      const session = Object.values(mockReadingSessions).find((item) => item.id === sessionId);
-      if (!session) {
-        throw new Error(getApiErrorMessage(error, "阅读进度更新失败"));
+      if (USE_MOCKS) {
+        const session = Object.values(mockReadingSessions).find((item) => item.id === sessionId);
+        if (session) return;
       }
+      throw new Error(getApiErrorMessage(error, "阅读进度更新失败"));
     }
   }
 };

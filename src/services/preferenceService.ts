@@ -1,4 +1,4 @@
-import { api, buildApiPath } from "@/services/api";
+import { api, buildApiPath, USE_MOCKS } from "@/services/api";
 import { mockPreferences } from "@/services/mockData";
 import type { UserPreferences } from "@/types";
 
@@ -26,8 +26,9 @@ export const preferenceService = {
     try {
       const response = await api.get<PreferenceApiResponse>(buildApiPath("v2", "/preferences"));
       return normalizePreferences(response.data);
-    } catch {
-      return mockPreferences;
+    } catch (error) {
+      if (USE_MOCKS) return mockPreferences;
+      throw error;
     }
   },
 
@@ -42,12 +43,15 @@ export const preferenceService = {
     try {
       const response = await api.patch<PreferenceApiResponse>(buildApiPath("v2", "/preferences"), payload);
       return normalizePreferences({ ...payload, ...response.data });
-    } catch {
-      return {
-        ...mockPreferences,
-        ...(input.defaultLevel ? { defaultLevel: input.defaultLevel } : {}),
-        ...(input.theme ? { theme: input.theme } : {})
-      };
+    } catch (error) {
+      if (USE_MOCKS) {
+        return {
+          ...mockPreferences,
+          ...(input.defaultLevel ? { defaultLevel: input.defaultLevel } : {}),
+          ...(input.theme ? { theme: input.theme } : {})
+        };
+      }
+      throw error;
     }
   }
 };

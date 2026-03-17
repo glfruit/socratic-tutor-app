@@ -1,4 +1,4 @@
-import { api, buildApiPath, getApiErrorMessage } from "@/services/api";
+import { api, buildApiPath, getApiErrorMessage, USE_MOCKS } from "@/services/api";
 import { mockDocumentDetails, mockDocuments } from "@/services/mockData";
 import type { DocumentDetail, DocumentFilters, DocumentSummary, UploadDocumentInput } from "@/types";
 
@@ -67,20 +67,23 @@ export const documentService = {
         }
       });
       return response.data;
-    } catch {
-      const filtered = applyFilters(mockDocuments, params);
-      const page = params.page ?? 1;
-      const pageSize = params.pageSize ?? (filtered.length || 20);
-      const startIndex = (page - 1) * pageSize;
+    } catch (error) {
+      if (USE_MOCKS) {
+        const filtered = applyFilters(mockDocuments, params);
+        const page = params.page ?? 1;
+        const pageSize = params.pageSize ?? (filtered.length || 20);
+        const startIndex = (page - 1) * pageSize;
 
-      return {
-        items: filtered.slice(startIndex, startIndex + pageSize),
-        pagination: {
-          page,
-          pageSize,
-          total: filtered.length
-        }
-      };
+        return {
+          items: filtered.slice(startIndex, startIndex + pageSize),
+          pagination: {
+            page,
+            pageSize,
+            total: filtered.length
+          }
+        };
+      }
+      throw error;
     }
   },
 
@@ -93,8 +96,9 @@ export const documentService = {
     try {
       const response = await api.get<DocumentDetail>(buildApiPath("v2", `/documents/${documentId}`));
       return response.data;
-    } catch {
-      return mockDocumentDetails[documentId] ?? { ...mockDocuments[0], id: documentId, chapters: [] };
+    } catch (error) {
+      if (USE_MOCKS) return mockDocumentDetails[documentId] ?? { ...mockDocuments[0], id: documentId, chapters: [] };
+      throw error;
     }
   },
 
@@ -102,21 +106,24 @@ export const documentService = {
     try {
       const response = await api.post<DocumentSearchResponse>(buildApiPath("v2", `/documents/${documentId}/search`), input);
       return response.data.results;
-    } catch {
-      const document = mockDocumentDetails[documentId] ?? mockDocumentDetails[mockDocuments[0].id];
-      const query = input.query.trim().toLowerCase();
+    } catch (error) {
+      if (USE_MOCKS) {
+        const document = mockDocumentDetails[documentId] ?? mockDocumentDetails[mockDocuments[0].id];
+        const query = input.query.trim().toLowerCase();
 
-      return document.chapters
-        .filter((chapter) => (input.chapterId ? chapter.id === input.chapterId : true))
-        .map((chapter) => ({
-          content: chapter.content ?? "",
-          chapterId: chapter.id,
-          chapterTitle: chapter.title,
-          score: query && chapter.content?.toLowerCase().includes(query) ? 0.95 : 0.6,
-          metadata: undefined
-        }))
-        .sort((left, right) => right.score - left.score)
-        .slice(0, input.topK ?? 5);
+        return document.chapters
+          .filter((chapter) => (input.chapterId ? chapter.id === input.chapterId : true))
+          .map((chapter) => ({
+            content: chapter.content ?? "",
+            chapterId: chapter.id,
+            chapterTitle: chapter.title,
+            score: query && chapter.content?.toLowerCase().includes(query) ? 0.95 : 0.6,
+            metadata: undefined
+          }))
+          .sort((left, right) => right.score - left.score)
+          .slice(0, input.topK ?? 5);
+      }
+      throw error;
     }
   },
 
@@ -136,16 +143,19 @@ export const documentService = {
         headers: { "Content-Type": "multipart/form-data" }
       });
       return response.data;
-    } catch {
-      return {
-        id: crypto.randomUUID(),
-        type: input.type,
-        title: input.title?.trim() || input.file.name.replace(/\.[^.]+$/, ""),
-        description: input.description,
-        status: "PROCESSING",
-        progress: 0,
-        createdAt: new Date().toISOString()
-      };
+    } catch (error) {
+      if (USE_MOCKS) {
+        return {
+          id: crypto.randomUUID(),
+          type: input.type,
+          title: input.title?.trim() || input.file.name.replace(/\.[^.]+$/, ""),
+          description: input.description,
+          status: "PROCESSING",
+          progress: 0,
+          createdAt: new Date().toISOString()
+        };
+      }
+      throw error;
     }
   },
 
@@ -153,10 +163,11 @@ export const documentService = {
     try {
       await api.delete(buildApiPath("v2", `/documents/${documentId}`));
     } catch (error) {
-      const existsInMock = Boolean(mockDocumentDetails[documentId] || mockDocuments.find((item) => item.id === documentId));
-      if (!existsInMock) {
-        throw new Error(getApiErrorMessage(error, "删除文档失败"));
+      if (USE_MOCKS) {
+        const existsInMock = Boolean(mockDocumentDetails[documentId] || mockDocuments.find((item) => item.id === documentId));
+        if (existsInMock) return;
       }
+      throw new Error(getApiErrorMessage(error, "删除文档失败"));
     }
   }
 };

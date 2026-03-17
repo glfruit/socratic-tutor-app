@@ -17,18 +17,31 @@ export class ReadingController {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const stream = await container.readingService.streamMessage(
-      req.user!.userId,
-      req.params.id,
-      req.body
-    );
+    let closed = false;
+    req.on('close', () => { closed = true; });
 
-    for await (const chunk of stream) {
-      res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+    try {
+      const stream = await container.readingService.streamMessage(
+        req.user!.userId,
+        req.params.id,
+        req.body
+      );
+
+      for await (const chunk of stream) {
+        if (closed) break;
+        res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
+      }
+
+      if (!closed) {
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      }
+    } catch (err) {
+      if (!closed) {
+        res.write(`event: error\ndata: ${JSON.stringify({ error: 'Stream failed' })}\n\n`);
+      }
+    } finally {
+      res.end();
     }
-
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-    res.end();
   }
 
   async updateProgress(req: Request, res: Response) {

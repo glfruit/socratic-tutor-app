@@ -25,13 +25,13 @@ export const createApp = () => {
       credentials: true
     })
   );
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
-  app.use('/api/v1/auth', authRoutes);
+  app.use('/api/v1/auth', rateLimitMiddleware(container.redis, { limit: 10, windowSeconds: 60 }), authRoutes);
 
   app.use(authMiddleware());
   app.use(rateLimitMiddleware(container.redis, { limit: 60, windowSeconds: 60 }));

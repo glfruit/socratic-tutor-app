@@ -9,10 +9,13 @@ export const rateLimitMiddleware = (
   return async (req: Request, _res: Response, next: NextFunction): Promise<void> => {
     try {
       const key = `socratic:rate:${req.user?.userId ?? req.ip}`;
-      const count = await redis.incr(key);
-      if (count === 1) {
-        await redis.expire(key, options.windowSeconds);
-      }
+      const results = await redis
+        .multi()
+        .incr(key)
+        .expire(key, options.windowSeconds)
+        .exec();
+
+      const count = (results?.[0]?.[1] as number) ?? 0;
 
       if (count > options.limit) {
         next(new AppError('Rate limit exceeded', 429));
