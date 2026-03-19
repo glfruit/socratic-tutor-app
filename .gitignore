@@ -12,3 +12,4 @@ vitest.config.d.ts
 .env
 .env.*
 !.env.example
+.gstack/
