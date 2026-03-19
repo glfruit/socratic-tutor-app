@@ -116,7 +116,6 @@ export function RegisterPage() {
             >
               <option value="STUDENT">学生</option>
               <option value="TEACHER">教师</option>
-              <option value="ADMIN">管理员</option>
             </select>
           </div>
           {error ? <p className="text-sm text-red-600">{error}</p> : null}
