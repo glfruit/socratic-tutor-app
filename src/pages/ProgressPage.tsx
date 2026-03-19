@@ -11,10 +11,10 @@ export function ProgressPage() {
 
   useEffect(() => {
     progressService.getDashboard().then((data) => {
-      setStats(data.stats);
-      setRadar(data.radar);
-      setMastery(data.mastery);
-    });
+      setStats(data.stats ?? []);
+      setRadar(data.radar ?? []);
+      setMastery(data.mastery ?? []);
+    }).catch(() => { /* keep initial empty state */ });
   }, []);
 
   return (
