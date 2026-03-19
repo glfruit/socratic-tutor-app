@@ -19,9 +19,18 @@ export const createApp = () => {
   const app = express();
 
   app.use(helmet());
+  const corsOrigins = [env.CORS_ORIGIN];
+  try {
+    const parsed = new URL(env.CORS_ORIGIN);
+    if (parsed.hostname === 'localhost') {
+      corsOrigins.push(env.CORS_ORIGIN.replace('localhost', '127.0.0.1'));
+    } else if (parsed.hostname === '127.0.0.1') {
+      corsOrigins.push(env.CORS_ORIGIN.replace('127.0.0.1', 'localhost'));
+    }
+  } catch { /* keep single origin */ }
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: corsOrigins,
       credentials: true
     })
   );
